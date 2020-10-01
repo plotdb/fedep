@@ -16,9 +16,13 @@ fed = import$({
   } : obj;
   root = path.join("node_modules", obj.name);
   info = JSON.parse(fs.readFileSync(path.join(root, "package.json")).toString());
+  if (/[\.\/]+/.exec(info._id)) {
+    throw new Error("fedep: not supported name in module " + obj.name + ".");
+  }
   ref$ = info._id.split("@"), name = ref$[0], version = ref$[1];
   desdir = path.join(fed.root, name, version);
   maindir = path.join(fed.root, name, "main");
+  fsExtra.removeSync(desdir);
   fsExtra.ensureDirSync(desdir);
   if (obj.browserify) {
     b = browserify();
