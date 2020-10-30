@@ -9,7 +9,7 @@ frontend dependency installer. copy frontend modules to desired directory, with 
 
   "scripts": {
     ...
-    "postinstall": "./node_modules/.bin/lsc ./node_modules/static-npm/main.ls"
+    "postinstall": "./node_modules/.bin/fedep"
   },
   "frontendDependencies": {
     "root": "web/static/assets/lib",

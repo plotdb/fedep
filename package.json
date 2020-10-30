@@ -14,7 +14,7 @@
     "npm": ">=1.2.2"
   },
   "dependencies": {
-    "bootstrap": "=4.5.2",
+    "browserify": "^17.0.0",
     "fs-extra": "^9.0.1"
   },
   "devDependencies": {
