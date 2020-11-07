@@ -24,3 +24,16 @@ frontend dependency installer. copy frontend modules to desired directory, with 
 
 script({name, version, "dist/..."})
 
+## modules format
+
+you can use either string or object to list modules to be used. e.g.,
+
+    ["ldLazy", {name: "ldview"}]
+
+
+If object is used, it contains following fields:
+
+ - name - module name
+ - browserify - true if browserify this module
+ - dir - subdir to copy in this module
+
