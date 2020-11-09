@@ -10,8 +10,8 @@
     "url": "https://github.com/plotdb/fedep"
   },
   "engines": {
-    "node": ">=0.12.6",
-    "npm": ">=1.2.2"
+    "node": ">=10.14.1",
+    "npm": ">=6.4.1"
   },
   "dependencies": {
     "browserify": "^17.0.0",
