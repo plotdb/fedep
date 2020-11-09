@@ -2,8 +2,8 @@
   "author": "zbryikt",
   "name": "fedep",
   "license": "MIT",
-  "description": "",
-  "version": "0.0.1",
+  "description": "Frontend dependency installer",
+  "version": "0.0.2",
   "homepage": "https://github.com/plotdb/fedep",
   "repository": {
     "type": "git",
