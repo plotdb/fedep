@@ -41,6 +41,7 @@ fed = import$({
     fsExtra.copySync(srcdir, desdir);
   }
   console.log(" -- " + srcdir + " -> " + desdir + " ");
+  fsExtra.removeSync(maindir);
   return fsExtra.ensureSymlinkSync(desdir, maindir);
 });
 function import$(obj, src){

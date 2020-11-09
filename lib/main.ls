@@ -25,4 +25,5 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
       if !fs.exists-sync(srcdir) => srcdir = root
     fs-extra.copy-sync srcdir, desdir
   console.log " -- #srcdir -> #desdir "
+  fs-extra.remove-sync maindir
   fs-extra.ensure-symlink-sync desdir, maindir
