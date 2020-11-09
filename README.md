@@ -1,11 +1,6 @@
 # fedep
 
-see also: 
- - frontend-dependencies - https://github.com/msurdi/frontend-dependencies
- - pancake - https://github.com/govau/pancake
-
-frontend dependency installer. copy frontend modules to desired directory, with additional configurations in package.json:
-
+Frontend dependency installer. copy frontend modules to desired directory, with additional configurations in package.json:
 
   "scripts": {
     ...
@@ -16,24 +11,34 @@ frontend dependency installer. copy frontend modules to desired directory, with 
     "modules": [ "ldLazy" ]
   }
 
-1. install via npm
-2. auto copy to static/assets/lib/<name>/<version>/ after install
-2. synlink <version> to /main/
-3. can manually trigger copy action
-4. work with bundler?
 
-script({name, version, "dist/..."})
+by executing `npx fedep` or invoking via postinstall when `npm i`, `fedep` will do:
 
-## modules format
+  - copy content of `dist` directory (configurable as `dir` option, see below) in specified packages to static/assets/lib/<name>/<version>/ after install
+  - build a symbolic link from <version> to /main/
+
+
+## Modules Format
 
 you can use either string or object to list modules to be used. e.g.,
 
-    ["ldLazy", {name: "ldview"}]
+    ["ldLazy", ...,  {name: "ldview"}, ...]
 
 
 If object is used, it contains following fields:
 
- - name - module name
- - browserify - true if browserify this module
- - dir - subdir to copy in this module
+ - `name` - module name
+ - `browserify` - true if browserify this module
+ - `dir` - subdir to copy in this module. default `dist` if not specified
 
+
+## Alternatives
+
+see also: 
+ - frontend-dependencies - https://github.com/msurdi/frontend-dependencies
+ - pancake - https://github.com/govau/pancake
+
+
+## License
+
+MIT
