@@ -10,16 +10,17 @@ fed = import$({
   modules: []
 }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
 (fed.modules || []).map(function(obj){
-  var root, info, ref$, i$, name, version, desdir, maindir, b, srcdir;
+  var root, info, id, ref$, i$, name, version, desdir, maindir, b, srcdir;
   obj = typeof obj === 'string' ? {
     name: obj
   } : obj;
   root = path.join("node_modules", obj.name);
   info = JSON.parse(fs.readFileSync(path.join(root, "package.json")).toString());
-  if (/\.\.|^\//.exec(info._id)) {
+  id = info._id || info.name + "@" + info.version;
+  if (/\.\.|^\//.exec(id)) {
     throw new Error("fedep: not supported name in module " + obj.name + ".");
   }
-  ref$ = info._id.split("@"), name = 0 < (i$ = ref$.length - 1) ? slice$.call(ref$, 0, i$) : (i$ = 0, []), version = ref$[i$];
+  ref$ = id.split("@"), name = 0 < (i$ = ref$.length - 1) ? slice$.call(ref$, 0, i$) : (i$ = 0, []), version = ref$[i$];
   name = name.join('@');
   desdir = path.join(fed.root, name, version);
   maindir = path.join(fed.root, name, "main");

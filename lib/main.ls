@@ -7,8 +7,9 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
   obj = if typeof(obj) == \string => {name: obj} else obj
   root = path.join("node_modules", obj.name)
   info = JSON.parse(fs.read-file-sync path.join(root, "package.json") .toString!)
-  if /\.\.|^\//.exec(info._id) => throw new Error("fedep: not supported name in module #{obj.name}.")
-  [...name,version] = info._id.split("@")
+  id = info._id or "#{info.name}@#{info.version}"
+  if /\.\.|^\//.exec(id) => throw new Error("fedep: not supported name in module #{obj.name}.")
+  [...name,version] = id.split("@")
   name = name.join \@
   desdir = path.join(fed.root, name, version)
   maindir = path.join(fed.root, name, "main")
