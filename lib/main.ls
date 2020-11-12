@@ -1,5 +1,17 @@
 #!/usr/bin/env node
-require! <[fs path fs-extra browserify]>
+require! <[fs path fs-extra browserify yargs]>
+
+argv = yargs
+  .option \symlink, do
+    alias: \s
+    description: "use symlink instead of hard copy to make main folder. default true"
+    type: \boolean
+  .help \help
+  .alias \help, \h
+  .check (argv, options) -> return true
+  .argv
+
+use-symlink = if argv.s? => argv.s else true
 
 fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" .toString!).frontendDependencies or {})
 
@@ -27,4 +39,5 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
     fs-extra.copy-sync srcdir, desdir
   console.log " -- #srcdir -> #desdir "
   fs-extra.remove-sync maindir
-  fs-extra.ensure-symlink-sync desdir, maindir
+  if use-symlink => fs-extra.ensure-symlink-sync desdir, maindir
+  else fs-extra.copy-sync desdir, maindir
