@@ -39,6 +39,7 @@ fed = import$({
     b = browserify();
     b.require(obj.name);
     b.bundle().pipe(fs.createWriteStream(path.join(desdir, name + ".js")));
+    console.log(" -- (from module) -> " + desdir + " ");
   } else {
     if (obj.dir) {
       srcdir = path.join(root, obj.dir);
@@ -49,8 +50,8 @@ fed = import$({
       }
     }
     fsExtra.copySync(srcdir, desdir);
+    console.log(" -- " + srcdir + " -> " + desdir + " ");
   }
-  console.log(" -- " + srcdir + " -> " + desdir + " ");
   fsExtra.removeSync(maindir);
   if (useSymlink) {
     return fsExtra.ensureSymlinkSync(desdir, maindir);

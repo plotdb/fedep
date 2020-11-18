@@ -31,13 +31,14 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
     b = browserify!
     b.require(obj.name)
     b.bundle!pipe fs.createWriteStream(path.join(desdir, "#name.js"))
+    console.log " -- (from module) -> #desdir "
   else
     if obj.dir => srcdir = path.join(root, obj.dir)
     else
       srcdir = path.join(root, "dist")
       if !fs.exists-sync(srcdir) => srcdir = root
     fs-extra.copy-sync srcdir, desdir
-  console.log " -- #srcdir -> #desdir "
+    console.log " -- #srcdir -> #desdir "
   fs-extra.remove-sync maindir
   if use-symlink => fs-extra.ensure-symlink-sync desdir, maindir
   else fs-extra.copy-sync desdir, maindir
