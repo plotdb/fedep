@@ -3,7 +3,7 @@
   "name": "fedep",
   "license": "MIT",
   "description": "Frontend dependency installer",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "homepage": "https://github.com/plotdb/fedep",
   "repository": {
     "type": "git",
