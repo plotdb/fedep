@@ -39,7 +39,7 @@ fed = import$({
     b = browserify();
     b.require(obj.name);
     b.bundle().pipe(fs.createWriteStream(path.join(desdir, name + ".js")));
-    console.log(" -- (from module) -> " + desdir + " ");
+    console.log(" -- (module -> browserify) -> " + desdir + " ");
   } else {
     if (obj.dir) {
       srcdir = path.join(root, obj.dir);
