@@ -1,3 +1,8 @@
+# 0.0.9 ( upcoming update )
+
+ - release necessary file(s) only.
+
+
 # 0.0.8
 
  - support browserify options.

@@ -2,8 +2,11 @@
   "author": "zbryikt",
   "name": "fedep",
   "license": "MIT",
+  "files": [
+    "./cli.js"
+  ],
   "description": "Frontend dependency installer",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "homepage": "https://github.com/plotdb/fedep",
   "repository": {
     "type": "git",
