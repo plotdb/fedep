@@ -1,6 +1,12 @@
+# 0.0.8
+
+ - support browserify options.
+
+
 # 0.0.7
 
  - fix bug: fedep log shows `undefined` for modules bundled with browserify
+
 
 # 0.0.6
 
