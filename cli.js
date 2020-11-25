@@ -36,7 +36,7 @@ fed = import$({
   fsExtra.removeSync(desdir);
   fsExtra.ensureDirSync(desdir);
   if (obj.browserify) {
-    b = browserify();
+    b = browserify(typeof obj.browserify === 'object' ? obj.browserify : void 8);
     b.require(obj.name);
     b.bundle().pipe(fs.createWriteStream(path.join(desdir, name + ".js")));
     console.log(" -- (module -> browserify) -> " + desdir + " ");

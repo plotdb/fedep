@@ -28,7 +28,7 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
   fs-extra.remove-sync desdir
   fs-extra.ensure-dir-sync desdir
   if obj.browserify =>
-    b = browserify!
+    b = browserify(if typeof(obj.browserify) == \object => obj.browserify)
     b.require(obj.name)
     b.bundle!pipe fs.createWriteStream(path.join(desdir, "#name.js"))
     console.log " -- (module -> browserify) -> #desdir "
