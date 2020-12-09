@@ -3,10 +3,10 @@
   "name": "fedep",
   "license": "MIT",
   "files": [
-    "./cli.js"
+    "cli.js"
   ],
   "description": "Frontend dependency installer",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "homepage": "https://github.com/plotdb/fedep",
   "repository": {
     "type": "git",
