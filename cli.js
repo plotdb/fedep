@@ -19,7 +19,7 @@ fed = import$({
   modules: []
 }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
 (fed.modules || []).map(function(obj){
-  var root, info, id, ref$, i$, name, version, desdir, maindir, b, srcdir;
+  var root, info, id, ref$, i$, name, version, ret, that, desdir, maindir, b, srcdir;
   obj = typeof obj === 'string' ? {
     name: obj
   } : obj;
@@ -30,7 +30,17 @@ fed = import$({
     throw new Error("fedep: not supported name in module " + obj.name + ".");
   }
   ref$ = id.split("@"), name = 0 < (i$ = ref$.length - 1) ? slice$.call(ref$, 0, i$) : (i$ = 0, []), version = ref$[i$];
-  name = name.join('@');
+  if (ret = /#([a-zA-Z0-9_.-]+)$/.exec(version)) {
+    version = ret[1];
+  }
+  if (/\//.exec(version)) {
+    version = version.replace(/\//g, '-');
+  }
+  name = (that = name[0])
+    ? that
+    : name[1]
+      ? "@" + name[1]
+      : name.join('@');
   desdir = path.join(fed.root, name, version);
   maindir = path.join(fed.root, name, "main");
   fsExtra.removeSync(desdir);

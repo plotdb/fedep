@@ -22,7 +22,19 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
   id = info._id or "#{info.name}@#{info.version}"
   if /\.\.|^\//.exec(id) => throw new Error("fedep: not supported name in module #{obj.name}.")
   [...name,version] = id.split("@")
-  name = name.join \@
+
+  # TODO we may need a better approach for version resolving if semver cannot be found.
+  # if there is tag in version, just use it.
+  if (ret = /#([a-zA-Z0-9_.-]+)$/.exec(version)) => version = ret.1
+  # slash intervene path generation so replace all of them
+  if /\//.exec(version) => version = version.replace(/\//g, '-')
+
+  # name.0 might be empty due to namespaced module ( e.g., @loadingio/ldquery )
+  # so we simply added it back.
+  # name might contain patterns like `ldiconfont@git+ssh://git@...` so we discard things after 2nd elements.
+  name = if name.0 => that else if name.1 => "@#{name.1}"
+  # if there are any exception, just join them back to provide raw name.
+  else name.join(\@)
   desdir = path.join(fed.root, name, version)
   maindir = path.join(fed.root, name, "main")
   fs-extra.remove-sync desdir

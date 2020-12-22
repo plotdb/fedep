@@ -1,3 +1,8 @@
+# 0.0.11
+
+ - take care of name/version that contains `@` or `/` characters.
+
+
 # 0.0.10
 
  - release necessary file(s) only.
