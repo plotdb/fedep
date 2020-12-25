@@ -1,3 +1,9 @@
+# 0.0.12
+
+ - fix bug: browserify.bundle is asynchronous thus we need wait before we make `main` folder.
+ - upgrade LiveScript version to 1.6.0.
+
+
 # 0.0.11
 
  - take care of name/version that contains `@` or `/` characters.

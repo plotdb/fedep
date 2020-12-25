@@ -40,17 +40,22 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
   fs-extra.remove-sync desdir
   fs-extra.ensure-dir-sync desdir
   if obj.browserify =>
-    b = browserify(if typeof(obj.browserify) == \object => obj.browserify)
-    b.require(obj.name)
-    b.bundle!pipe fs.createWriteStream(path.join(desdir, "#name.js"))
-    console.log " -- (module -> browserify) -> #desdir "
+    p = new Promise (res, rej) ->
+      b = browserify(if typeof(obj.browserify) == \object => obj.browserify)
+      b.require(obj.name)
+      b.bundle (e, buf) ->
+        if e => return rej new Error(e)
+        fs.write-file-sync path.join(desdir, "#name.js"), buf
+        console.log " -- (module -> browserify) -> #desdir "
+        res!
   else
     if obj.dir => srcdir = path.join(root, obj.dir)
     else
       srcdir = path.join(root, "dist")
       if !fs.exists-sync(srcdir) => srcdir = root
     fs-extra.copy-sync srcdir, desdir
-    console.log " -- #srcdir -> #desdir "
-  fs-extra.remove-sync maindir
-  if use-symlink => fs-extra.ensure-symlink-sync desdir, maindir
-  else fs-extra.copy-sync desdir, maindir
+    p = Promise.resolve!then -> console.log " -- #srcdir -> #desdir "
+  p.then ->
+    fs-extra.remove-sync maindir
+    if use-symlink => fs-extra.ensure-symlink-sync desdir, maindir
+    else fs-extra.copy-sync desdir, maindir
