@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.0.15
+
+ - use symlink instead hard copy when using `-l`.
+
+
 ## v0.0.14
 
  - add `local` option for installing frontend modules from local repo.

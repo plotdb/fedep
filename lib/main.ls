@@ -50,7 +50,7 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
   else desdir = path.join(fed.root, name, version)
   maindir = path.join(fed.root, name, "main")
   fs-extra.remove-sync desdir
-  fs-extra.ensure-dir-sync desdir
+  if !local-module => fs-extra.ensure-dir-sync desdir
   if obj.browserify =>
     p = new Promise (res, rej) ->
       b = browserify(if typeof(obj.browserify) == \object => obj.browserify)
@@ -65,7 +65,8 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
     else
       srcdir = path.join(root, "dist")
       if !fs.exists-sync(srcdir) => srcdir = root
-    fs-extra.copy-sync srcdir, desdir
+    if local-module => fs-extra.ensure-symlink-sync srcdir, desdir
+    else fs-extra.copy-sync srcdir, desdir
     p = Promise.resolve!then -> console.log " -- #srcdir -> #desdir "
   p.then ->
     fs-extra.remove-sync maindir

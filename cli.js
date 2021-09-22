@@ -68,7 +68,9 @@ fed = import$({
   }
   maindir = path.join(fed.root, name, "main");
   fsExtra.removeSync(desdir);
-  fsExtra.ensureDirSync(desdir);
+  if (!localModule) {
+    fsExtra.ensureDirSync(desdir);
+  }
   if (obj.browserify) {
     p = new Promise(function(res, rej){
       var b;
@@ -92,7 +94,11 @@ fed = import$({
         srcdir = root;
       }
     }
-    fsExtra.copySync(srcdir, desdir);
+    if (localModule) {
+      fsExtra.ensureSymlinkSync(srcdir, desdir);
+    } else {
+      fsExtra.copySync(srcdir, desdir);
+    }
     p = Promise.resolve().then(function(){
       return console.log(" -- " + srcdir + " -> " + desdir + " ");
     });
