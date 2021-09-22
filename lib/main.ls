@@ -1,15 +1,24 @@
 #!/usr/bin/env node
-require! <[fs path fs-extra browserify yargs]>
+require! <[fs path os fs-extra browserify yargs]>
 
 argv = yargs
   .option \symlink, do
     alias: \s
     description: "use symlink instead of hard copy to make main folder. default true"
     type: \boolean
+  .option \local, do
+    alias: \l
+    description: "use local folder for a specific module, with module:dir syntax"
   .help \help
   .alias \help, \h
   .check (argv, options) -> return true
   .argv
+
+if argv.l =>
+  ret = argv.l.split(\:)
+  local-module = name: ret.0, path: path.resolve(ret.1.replace(/^~/, os.homedir!))
+
+else local-module = null
 
 use-symlink = if argv.s? => argv.s else true
 
@@ -17,7 +26,9 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
 
 (fed.modules or []).map (obj) ->
   obj = if typeof(obj) == \string => {name: obj} else obj
-  root = path.join("node_modules", obj.name)
+  if local-module and obj.name != local-module.name => return
+  if local-module => root = local-module.path
+  else root = path.join("node_modules", obj.name)
   info = JSON.parse(fs.read-file-sync path.join(root, "package.json") .toString!)
   id = info._id or "#{info.name}@#{info.version}"
   if /\.\.|^\//.exec(id) => throw new Error("fedep: not supported name in module #{obj.name}.")
@@ -35,7 +46,8 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
   name = if name.0 => that else if name.1 => "@#{name.1}"
   # if there are any exception, just join them back to provide raw name.
   else name.join(\@)
-  desdir = path.join(fed.root, name, version)
+  if local-module => desdir = path.join(fed.root, name, 'local')
+  else desdir = path.join(fed.root, name, version)
   maindir = path.join(fed.root, name, "main")
   fs-extra.remove-sync desdir
   fs-extra.ensure-dir-sync desdir

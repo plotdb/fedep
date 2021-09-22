@@ -14,8 +14,22 @@ Frontend dependency installer. copy frontend modules to desired directory, with 
 
 by executing `npx fedep` or invoking via postinstall when `npm i`, `fedep` will do:
 
-  - copy content of `dist` directory (configurable as `dir` option, see below) in specified packages to static/assets/lib/<name>/<version>/ after install
+  - lookup package with given name in `node_modules` folder.
+  - once found, copy content to `<root>/<name>/<version>` from folders of give source packages in following priority:
+    - `<dir>` folder if `dir` option is given ( see below ).
+    - `dist` folder if `<dir>` is omitted and `dist` exists
+    - otherwise, the whole package is copied.
   - build a symbolic link from <version> to /main/
+
+
+Once configuration is prepared, run:
+
+    npx fedep
+
+
+You can also use local repo for a specific module:
+
+    npx fedep -l <some-module>:<path-to-local-repo>
 
 
 ## Modules Format

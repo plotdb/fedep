@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.0.14
+
+ - add `local` option for installing frontend modules from local repo.
+
+
 ## v0.0.13
 
  - bump `path-parse` and `elliptic` version for vulnerability fixing
