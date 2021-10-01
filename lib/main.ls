@@ -65,7 +65,9 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
     else
       srcdir = path.join(root, "dist")
       if !fs.exists-sync(srcdir) => srcdir = root
-    if local-module => fs-extra.ensure-symlink-sync srcdir, desdir
+    if local-module or obj.link =>
+      fs-extra.remove-sync desdir
+      fs-extra.ensure-symlink-sync srcdir, desdir
     else fs-extra.copy-sync srcdir, desdir
     p = Promise.resolve!then -> console.log " -- #srcdir -> #desdir "
   p.then ->

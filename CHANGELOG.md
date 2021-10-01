@@ -1,5 +1,11 @@
 # Change Logs
 
+## v0.0.16
+
+ - support `link` option for linking from src to des.
+ - remove livescript header
+
+
 ## v0.0.15
 
  - use symlink instead hard copy when using `-l`.

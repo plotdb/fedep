@@ -41,10 +41,12 @@ you can use either string or object to list modules to be used. e.g.,
 
 If object is used, it contains following fields:
 
- - `name` - module name
- - `browserify` - true/object if browserify this module.
+ - `name`: module name
+ - `browserify`: true/object if browserify this module.
    - if it's an object, the object will be passed to browserify as it's option object.
- - `dir` - subdir to copy in this module. default `dist` if not specified
+ - `dir`: subdir to copy in this module. default `dist` if not specified
+ - `link`: set true to use symlink instead of copying. default false.
+   - always false if `browserify` is set to true.
 
 
 ## Alternatives

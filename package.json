@@ -6,7 +6,7 @@
     "cli.js"
   ],
   "description": "Frontend dependency installer",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "homepage": "https://github.com/plotdb/fedep",
   "repository": {
     "type": "git",
@@ -22,9 +22,20 @@
     "yargs": "^16.1.0"
   },
   "devDependencies": {
+    "@zbryikt/template": "^2.3.21",
+    "ldview": "^0.2.3",
     "livescript": "^1.6.0"
   },
   "bin": {
     "fedep": "./cli.js"
+  },
+  "frontendDependencies": {
+    "root": "web/static/assets/lib",
+    "modules": [
+      {
+        "name": "ldview",
+        "link": true
+      }
+    ]
   }
 }

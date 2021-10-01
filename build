@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 rm -f cli.js
 echo "#!/usr/bin/env node" > cli.js
-./node_modules/.bin/lsc -cbp lib/main.ls >> cli.js
+./node_modules/.bin/lsc -cbp --no-header lib/main.ls >> cli.js
 chmod 755 cli.js
