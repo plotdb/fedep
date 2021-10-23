@@ -27,7 +27,14 @@ Once configuration is prepared, run:
     npx fedep
 
 
-You can also use local repo for a specific module:
+for a quick setup of `frontendDependencies` field, run:
+
+    npx fedep init
+
+you still have to update its fields according to what you need.
+
+
+Additionally, you can also use local repo for a specific module:
 
     npx fedep -l <some-module>:<path-to-local-repo>
 

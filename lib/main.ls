@@ -17,8 +17,22 @@ argv = yargs
 if argv.l =>
   ret = argv.l.split(\:)
   local-module = name: ret.0, path: path.resolve(ret.1.replace(/^~/, os.homedir!))
-
 else local-module = null
+
+cmd = argv._.0
+
+if cmd == \init =>
+  json = JSON.parse(fs.read-file-sync 'package.json' .toString!)
+  if json.frontendDependencies =>
+    console.log "package.json has already inited. skipped. "
+  else
+    json.frontendDependencies = {
+      root: "web/static/assets/lib"
+      modules: Array.from(new Set([k for k of json.dependencies] ++ [k for k of json.devDependencies]))
+    }
+    fs.write-file-sync "package.json", JSON.stringify(json, null, '  ')
+    console.log "package.json updated."
+  process.exit!
 
 use-symlink = if argv.s? => argv.s else true
 

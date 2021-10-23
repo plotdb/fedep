@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var fs, path, os, fsExtra, browserify, yargs, argv, ret, localModule, useSymlink, fed, slice$ = [].slice;
+var fs, path, os, fsExtra, browserify, yargs, argv, ret, localModule, cmd, json, k, useSymlink, fed, slice$ = [].slice;
 fs = require('fs');
 path = require('path');
 os = require('os');
@@ -24,6 +24,33 @@ if (argv.l) {
   };
 } else {
   localModule = null;
+}
+cmd = argv._[0];
+if (cmd === 'init') {
+  json = JSON.parse(fs.readFileSync('package.json').toString());
+  if (json.frontendDependencies) {
+    console.log("package.json has already inited. skipped. ");
+  } else {
+    json.frontendDependencies = {
+      root: "web/static/assets/lib",
+      modules: Array.from(new Set((function(){
+        var results$ = [];
+        for (k in json.dependencies) {
+          results$.push(k);
+        }
+        return results$;
+      }()).concat((function(){
+        var results$ = [];
+        for (k in json.devDependencies) {
+          results$.push(k);
+        }
+        return results$;
+      }()))))
+    };
+    fs.writeFileSync("package.json", JSON.stringify(json, null, '  '));
+    console.log("package.json updated.");
+  }
+  process.exit();
 }
 useSymlink = argv.s != null ? argv.s : true;
 fed = import$({

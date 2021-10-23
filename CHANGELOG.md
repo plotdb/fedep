@@ -1,5 +1,10 @@
 # Change Logs
 
+## v0.0.17
+
+ - add `init` command ( `npx fedep init` ) for quickly setup a `frontendDependencies` entry.
+
+
 ## v0.0.16
 
  - support `link` option for linking from src to des.
