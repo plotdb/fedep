@@ -38,6 +38,10 @@ Additionally, you can also use local repo for a specific module:
 
     npx fedep -l <some-module>:<path-to-local-repo>
 
+Use semi comma `;` to separate multiple pairs of local repos:
+
+    npx fedep -l "mod1:path-to-mod1;mod2:path-to-mod2;mod3:path-to-mod3"
+
 
 ## Modules Format
 

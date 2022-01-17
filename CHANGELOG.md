@@ -4,6 +4,7 @@
 
  - copy the complete module ( skip `node_modules` if any ) instead of `dist` only.
    - for legacy support, still support `dist` copying with `--use-dist` option.
+ - support multiple pairs, separated by `;` for -l option
 
 
 ## v0.0.17

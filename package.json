@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@zbryikt/template": "^2.3.21",
+    "ldcover": "^2.1.0",
     "ldview": "^0.2.3",
     "livescript": "^1.6.0"
   },
@@ -35,7 +36,8 @@
       {
         "name": "ldview",
         "link": true
-      }
+      },
+      "ldcover"
     ]
   }
 }

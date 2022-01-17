@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var fs, path, os, fsExtra, browserify, yargs, argv, ret, localModule, cmd, json, k, useSymlink, fed, slice$ = [].slice;
+var fs, path, os, fsExtra, browserify, yargs, argv, ret, localModules, cmd, json, k, useSymlink, fed, slice$ = [].slice;
 fs = require('fs');
 path = require('path');
 os = require('os');
@@ -20,13 +20,17 @@ argv = yargs.option('symlink', {
   return true;
 }).argv;
 if (argv.l) {
-  ret = argv.l.split(':');
-  localModule = {
-    name: ret[0],
-    path: path.resolve(ret[1].replace(/^~/, os.homedir()))
-  };
+  ret = argv.l.split(';').map(function(it){
+    return it.split(':');
+  });
+  localModules = ret.map(function(it){
+    return {
+      name: it[0],
+      path: path.resolve(it[1].replace(/^~/, os.homedir()))
+    };
+  });
 } else {
-  localModule = null;
+  localModules = [];
 }
 cmd = argv._[0];
 if (cmd === 'init') {
@@ -61,11 +65,14 @@ fed = import$({
   modules: []
 }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
 (fed.modules || []).map(function(obj){
-  var root, info, id, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir;
+  var localModule, root, info, id, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir;
   obj = typeof obj === 'string' ? {
     name: obj
   } : obj;
-  if (localModule && obj.name !== localModule.name) {
+  localModule = localModules.filter(function(it){
+    return it.name === obj.name;
+  })[0];
+  if (localModules.length && !localModule) {
     return;
   }
   if (localModule) {

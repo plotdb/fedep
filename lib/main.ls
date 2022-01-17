@@ -18,9 +18,9 @@ argv = yargs
   .argv
 
 if argv.l =>
-  ret = argv.l.split(\:)
-  local-module = name: ret.0, path: path.resolve(ret.1.replace(/^~/, os.homedir!))
-else local-module = null
+  ret = argv.l.split(\;).map -> it.split(\:)
+  local-modules = ret.map -> name: it.0, path: path.resolve(it.1.replace(/^~/, os.homedir!))
+else local-modules = []
 
 cmd = argv._.0
 
@@ -43,7 +43,8 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
 
 (fed.modules or []).map (obj) ->
   obj = if typeof(obj) == \string => {name: obj} else obj
-  if local-module and obj.name != local-module.name => return
+  local-module = local-modules.filter(-> it.name == obj.name).0
+  if local-modules.length and !local-module => return
   if local-module => root = local-module.path
   else root = path.join("node_modules", obj.name)
   info = JSON.parse(fs.read-file-sync path.join(root, "package.json") .toString!)
