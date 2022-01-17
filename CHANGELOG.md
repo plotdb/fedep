@@ -1,5 +1,11 @@
 # Change Logs
 
+## v1.0.0 (upcoming)
+
+ - copy the complete module ( skip `node_modules` if any ) instead of `dist` only.
+   - for legacy support, still support `dist` copying with `--use-dist` option.
+
+
 ## v0.0.17
 
  - add `init` command ( `npx fedep init` ) for quickly setup a `frontendDependencies` entry.

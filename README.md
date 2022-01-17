@@ -17,7 +17,7 @@ by executing `npx fedep` or invoking via postinstall when `npm i`, `fedep` will 
   - lookup package with given name in `node_modules` folder.
   - once found, copy content to `<root>/<name>/<version>` from folders of give source packages in following priority:
     - `<dir>` folder if `dir` option is given ( see below ).
-    - `dist` folder if `<dir>` is omitted and `dist` exists
+    - `dist` folder if `<dir>` is omitted, `dist` exists and `--use-dist` option is set to true.
     - otherwise, the whole package is copied.
   - build a symbolic link from <version> to /main/
 
@@ -51,7 +51,7 @@ If object is used, it contains following fields:
  - `name`: module name
  - `browserify`: true/object if browserify this module.
    - if it's an object, the object will be passed to browserify as it's option object.
- - `dir`: subdir to copy in this module. default `dist` if not specified
+ - `dir`: subdir to copy in this module. default the whole module, if not specified
  - `link`: set true to use symlink instead of copying. default false.
    - always false if `browserify` is set to true.
 

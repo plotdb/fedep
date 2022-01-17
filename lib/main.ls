@@ -9,6 +9,9 @@ argv = yargs
   .option \local, do
     alias: \l
     description: "use local folder for a specific module, with module:dir syntax"
+  .option \use-dist, do
+    type: \boolean
+    description: "enable legacy mode which uses `dist/` folder as base files to copy"
   .help \help
   .alias \help, \h
   .check (argv, options) -> return true
@@ -76,9 +79,10 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
         res!
   else
     if obj.dir => srcdir = path.join(root, obj.dir)
-    else
+    else if argv.useDist
       srcdir = path.join(root, "dist")
       if !fs.exists-sync(srcdir) => srcdir = root
+    else srcdir = root
     if local-module or obj.link =>
       fs-extra.remove-sync desdir
       fs-extra.ensure-symlink-sync srcdir, desdir

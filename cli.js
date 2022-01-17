@@ -13,6 +13,9 @@ argv = yargs.option('symlink', {
 }).option('local', {
   alias: 'l',
   description: "use local folder for a specific module, with module:dir syntax"
+}).option('use-dist', {
+  type: 'boolean',
+  description: "enable legacy mode which uses `dist/` folder as base files to copy"
 }).help('help').alias('help', 'h').check(function(argv, options){
   return true;
 }).argv;
@@ -114,11 +117,13 @@ fed = import$({
   } else {
     if (obj.dir) {
       srcdir = path.join(root, obj.dir);
-    } else {
+    } else if (argv.useDist) {
       srcdir = path.join(root, "dist");
       if (!fs.existsSync(srcdir)) {
         srcdir = root;
       }
+    } else {
+      srcdir = root;
     }
     if (localModule || obj.link) {
       fsExtra.removeSync(desdir);
