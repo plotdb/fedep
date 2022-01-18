@@ -49,6 +49,11 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
   else root = path.join("node_modules", obj.name)
   info = JSON.parse(fs.read-file-sync path.join(root, "package.json") .toString!)
   id = info._id or "#{info.name}@#{info.version}"
+
+  main-file =
+    js: [info.browser, info.main].filter(-> /\.js/.exec(it)).0
+    css: [info.style, info.browser, info.main].filter(-> /\.css/.exec(it)).0
+
   if /\.\.|^\//.exec(id) => throw new Error("fedep: not supported name in module #{obj.name}.")
   [...name,version] = id.split("@")
 
@@ -89,6 +94,20 @@ fed = {root: '.', modules: []} <<< (JSON.parse(fs.read-file-sync "package.json" 
       fs-extra.ensure-symlink-sync srcdir, desdir
     else fs-extra.copy-sync srcdir, desdir
     p = Promise.resolve!then -> console.log " -- #srcdir -> #desdir "
+    if main-file.js and !local-module =>
+      src-file = path.join(root, main-file.js)
+      des-file = path.join(desdir, "index.js")
+      if !fs.exists-sync(des-file) =>
+        fs-extra.copy-sync src-file, des-file
+        console.log "[JS ]".green, " -- #src-file --> #des-file "
+
+    if main-file.css and !local-module =>
+      src-file = path.join(root, main-file.css)
+      des-file = path.join(desdir, "index.css")
+      if !fs.exists-sync(des-file) =>
+        fs-extra.copy-sync src-file, des-file
+        console.log "[CSS]".green, " -- #src-file --> #des-file "
+
   p.then ->
     fs-extra.remove-sync maindir
     if use-symlink => fs-extra.ensure-symlink-sync desdir, maindir

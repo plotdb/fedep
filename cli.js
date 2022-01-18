@@ -65,7 +65,7 @@ fed = import$({
   modules: []
 }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
 (fed.modules || []).map(function(obj){
-  var localModule, root, info, id, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir;
+  var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, srcFile, desFile;
   obj = typeof obj === 'string' ? {
     name: obj
   } : obj;
@@ -82,6 +82,14 @@ fed = import$({
   }
   info = JSON.parse(fs.readFileSync(path.join(root, "package.json")).toString());
   id = info._id || info.name + "@" + info.version;
+  mainFile = {
+    js: [info.browser, info.main].filter(function(it){
+      return /\.js/.exec(it);
+    })[0],
+    css: [info.style, info.browser, info.main].filter(function(it){
+      return /\.css/.exec(it);
+    })[0]
+  };
   if (/\.\.|^\//.exec(id)) {
     throw new Error("fedep: not supported name in module " + obj.name + ".");
   }
@@ -141,6 +149,22 @@ fed = import$({
     p = Promise.resolve().then(function(){
       return console.log(" -- " + srcdir + " -> " + desdir + " ");
     });
+    if (mainFile.js && !localModule) {
+      srcFile = path.join(root, mainFile.js);
+      desFile = path.join(desdir, "index.js");
+      if (!fs.existsSync(desFile)) {
+        fsExtra.copySync(srcFile, desFile);
+        console.log("[JS ]".green, " -- " + srcFile + " --> " + desFile + " ");
+      }
+    }
+    if (mainFile.css && !localModule) {
+      srcFile = path.join(root, mainFile.css);
+      desFile = path.join(desdir, "index.css");
+      if (!fs.existsSync(desFile)) {
+        fsExtra.copySync(srcFile, desFile);
+        console.log("[CSS]".green, " -- " + srcFile + " --> " + desFile + " ");
+      }
+    }
   }
   return p.then(function(){
     fsExtra.removeSync(maindir);
