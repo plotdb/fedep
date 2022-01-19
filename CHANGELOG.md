@@ -1,6 +1,6 @@
 # Change Logs
 
-## v1.0.0 (upcoming)
+## v1.0.0
 
  - copy the complete module ( skip `node_modules` if any ) instead of `dist` only.
    - for legacy support, still support `dist` copying with `--use-dist` option.

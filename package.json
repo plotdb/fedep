@@ -6,7 +6,7 @@
     "cli.js"
   ],
   "description": "Frontend dependency installer",
-  "version": "0.0.17",
+  "version": "1.0.0",
   "homepage": "https://github.com/plotdb/fedep",
   "repository": {
     "type": "git",
