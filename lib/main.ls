@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-require! <[fs path os fs-extra browserify yargs]>
+require! <[@plotdb/colors fs path os fs-extra browserify yargs]>
 
 argv = yargs
   .option \symlink, do

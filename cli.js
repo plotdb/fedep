@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-var fs, path, os, fsExtra, browserify, yargs, argv, ret, localModules, cmd, json, k, useSymlink, fed, slice$ = [].slice;
+var colors, fs, path, os, fsExtra, browserify, yargs, argv, ret, localModules, cmd, json, k, useSymlink, fed, slice$ = [].slice;
+colors = require('@plotdb/colors');
 fs = require('fs');
 path = require('path');
 os = require('os');

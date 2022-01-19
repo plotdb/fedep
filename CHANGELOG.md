@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.0.1
+
+ - add missed `@plotdb/colors` module
+
+
 ## v1.0.0
 
  - copy the complete module ( skip `node_modules` if any ) instead of `dist` only.
