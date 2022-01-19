@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var colors, fs, path, os, fsExtra, browserify, yargs, argv, ret, localModules, cmd, json, k, useSymlink, fed, slice$ = [].slice;
+var colors, fs, path, os, fsExtra, browserify, yargs, child_process, argv, ret, localModules, cmd, json, k, srcFolder, workFolder, packageJson, exec, useSymlink, fed, slice$ = [].slice;
 colors = require('@plotdb/colors');
 fs = require('fs');
 path = require('path');
@@ -7,6 +7,7 @@ os = require('os');
 fsExtra = require('fs-extra');
 browserify = require('browserify');
 yargs = require('yargs');
+child_process = require('child_process');
 argv = yargs.option('symlink', {
   alias: 's',
   description: "use symlink instead of hard copy to make main folder. default true",
@@ -59,123 +60,173 @@ if (cmd === 'init') {
     console.log("package.json updated.");
   }
   process.exit();
-}
-useSymlink = argv.s != null ? argv.s : true;
-fed = import$({
-  root: '.',
-  modules: []
-}, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
-(fed.modules || []).map(function(obj){
-  var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, srcFile, desFile;
-  obj = typeof obj === 'string' ? {
-    name: obj
-  } : obj;
-  localModule = localModules.filter(function(it){
-    return it.name === obj.name;
-  })[0];
-  if (localModules.length && !localModule) {
-    return;
+} else if (cmd === 'publish') {
+  srcFolder = "dist";
+  workFolder = ".fedep/publish";
+  if (fs.existsSync(workFolder)) {
+    fsExtra.removeSync(workFolder);
   }
-  if (localModule) {
-    root = localModule.path;
-  } else {
-    root = path.join("node_modules", obj.name);
+  if (!fs.existsSync(srcFolder)) {
+    console.error("fedep only supports publish `dist` folder, while `dist` folder doesn't exist.");
+    process.exit();
   }
-  info = JSON.parse(fs.readFileSync(path.join(root, "package.json")).toString());
-  id = info._id || info.name + "@" + info.version;
-  mainFile = {
-    js: [info.browser, info.main].filter(function(it){
-      return /\.js/.exec(it);
-    })[0],
-    css: [info.style, info.browser, info.main].filter(function(it){
-      return /\.css/.exec(it);
-    })[0]
-  };
-  if (/\.\.|^\//.exec(id)) {
-    throw new Error("fedep: not supported name in module " + obj.name + ".");
-  }
-  ref$ = id.split("@"), name = 0 < (i$ = ref$.length - 1) ? slice$.call(ref$, 0, i$) : (i$ = 0, []), version = ref$[i$];
-  if (ret = /#([a-zA-Z0-9_.-]+)$/.exec(version)) {
-    version = ret[1];
-  }
-  if (/\//.exec(version)) {
-    version = version.replace(/\//g, '-');
-  }
-  name = (that = name[0])
-    ? that
-    : name[1]
-      ? "@" + name[1]
-      : name.join('@');
-  if (localModule) {
-    desdir = path.join(fed.root, name, 'local');
-  } else {
-    desdir = path.join(fed.root, name, version);
-  }
-  maindir = path.join(fed.root, name, "main");
-  fsExtra.removeSync(desdir);
-  if (!localModule) {
-    fsExtra.ensureDirSync(desdir);
-  }
-  if (obj.browserify) {
-    p = new Promise(function(res, rej){
-      var b;
-      b = browserify(typeof obj.browserify === 'object' ? obj.browserify : void 8);
-      b.require(obj.name);
-      return b.bundle(function(e, buf){
-        if (e) {
-          return rej(new Error(e));
+  fsExtra.ensureDirSync(workFolder);
+  fsExtra.copySync(srcFolder, workFolder);
+  ['README', 'README.md', 'package.json', 'LICENSE', 'CHANGELOG.md'].map(function(it){
+    if (!fs.existsSync(it)) {
+      return;
+    }
+    return fsExtra.copySync(it, path.join(workFolder, it));
+  });
+  packageJson = path.join(workFolder, "package.json");
+  json = JSON.parse(fs.readFileSync(packageJson).toString());
+  delete json.files;
+  ['style', 'module', 'main', 'browser', 'unpkg'].map(function(field){
+    if (!json[field]) {
+      return;
+    }
+    return json[field] = path.relative(srcFolder, json[field]);
+  });
+  fs.writeFileSync(packageJson, JSON.stringify(json));
+  exec = function(cmd){
+    return new Promise(function(res, rej){
+      var proc;
+      proc = child_process.spawn(cmd[0], cmd.slice(1), {
+        stdio: 'inherit'
+      });
+      return proc.on('exit', function(it){
+        if (it > 0) {
+          return rej(new Error());
+        } else {
+          return res();
         }
-        fs.writeFileSync(path.join(desdir, name + ".js"), buf);
-        console.log(" -- (module -> browserify) -> " + desdir + " ");
-        return res();
       });
     });
-  } else {
-    if (obj.dir) {
-      srcdir = path.join(root, obj.dir);
-    } else if (argv.useDist) {
-      srcdir = path.join(root, "dist");
-      if (!fs.existsSync(srcdir)) {
+  };
+  exec(['npm', 'publish'].concat([workFolder], ['--access', 'public'])).then(function(){
+    return fs.rmSync(workFolder, {
+      recursive: true,
+      force: true
+    });
+  });
+} else {
+  useSymlink = argv.s != null ? argv.s : true;
+  fed = import$({
+    root: '.',
+    modules: []
+  }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
+  (fed.modules || []).map(function(obj){
+    var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, srcFile, desFile;
+    obj = typeof obj === 'string' ? {
+      name: obj
+    } : obj;
+    localModule = localModules.filter(function(it){
+      return it.name === obj.name;
+    })[0];
+    if (localModules.length && !localModule) {
+      return;
+    }
+    if (localModule) {
+      root = localModule.path;
+    } else {
+      root = path.join("node_modules", obj.name);
+    }
+    info = JSON.parse(fs.readFileSync(path.join(root, "package.json")).toString());
+    id = info._id || info.name + "@" + info.version;
+    mainFile = {
+      js: [info.browser, info.main].filter(function(it){
+        return /\.js/.exec(it);
+      })[0],
+      css: [info.style, info.browser, info.main].filter(function(it){
+        return /\.css/.exec(it);
+      })[0]
+    };
+    if (/\.\.|^\//.exec(id)) {
+      throw new Error("fedep: not supported name in module " + obj.name + ".");
+    }
+    ref$ = id.split("@"), name = 0 < (i$ = ref$.length - 1) ? slice$.call(ref$, 0, i$) : (i$ = 0, []), version = ref$[i$];
+    if (ret = /#([a-zA-Z0-9_.-]+)$/.exec(version)) {
+      version = ret[1];
+    }
+    if (/\//.exec(version)) {
+      version = version.replace(/\//g, '-');
+    }
+    name = (that = name[0])
+      ? that
+      : name[1]
+        ? "@" + name[1]
+        : name.join('@');
+    if (localModule) {
+      desdir = path.join(fed.root, name, 'local');
+    } else {
+      desdir = path.join(fed.root, name, version);
+    }
+    maindir = path.join(fed.root, name, "main");
+    fsExtra.removeSync(desdir);
+    if (!localModule) {
+      fsExtra.ensureDirSync(desdir);
+    }
+    if (obj.browserify) {
+      p = new Promise(function(res, rej){
+        var b;
+        b = browserify(typeof obj.browserify === 'object' ? obj.browserify : void 8);
+        b.require(obj.name);
+        return b.bundle(function(e, buf){
+          if (e) {
+            return rej(new Error(e));
+          }
+          fs.writeFileSync(path.join(desdir, name + ".js"), buf);
+          console.log(" -- (module -> browserify) -> " + desdir + " ");
+          return res();
+        });
+      });
+    } else {
+      if (obj.dir) {
+        srcdir = path.join(root, obj.dir);
+      } else if (argv.useDist) {
+        srcdir = path.join(root, "dist");
+        if (!fs.existsSync(srcdir)) {
+          srcdir = root;
+        }
+      } else {
         srcdir = root;
       }
-    } else {
-      srcdir = root;
+      if (localModule || obj.link) {
+        fsExtra.removeSync(desdir);
+        fsExtra.ensureSymlinkSync(srcdir, desdir);
+      } else {
+        fsExtra.copySync(srcdir, desdir);
+      }
+      p = Promise.resolve().then(function(){
+        return console.log(" -- " + srcdir + " -> " + desdir + " ");
+      });
+      if (mainFile.js && !localModule) {
+        srcFile = path.join(root, mainFile.js);
+        desFile = path.join(desdir, "index.js");
+        if (!fs.existsSync(desFile)) {
+          fsExtra.copySync(srcFile, desFile);
+          console.log("[JS ]".green, " -- " + srcFile + " --> " + desFile + " ");
+        }
+      }
+      if (mainFile.css && !localModule) {
+        srcFile = path.join(root, mainFile.css);
+        desFile = path.join(desdir, "index.css");
+        if (!fs.existsSync(desFile)) {
+          fsExtra.copySync(srcFile, desFile);
+          console.log("[CSS]".green, " -- " + srcFile + " --> " + desFile + " ");
+        }
+      }
     }
-    if (localModule || obj.link) {
-      fsExtra.removeSync(desdir);
-      fsExtra.ensureSymlinkSync(srcdir, desdir);
-    } else {
-      fsExtra.copySync(srcdir, desdir);
-    }
-    p = Promise.resolve().then(function(){
-      return console.log(" -- " + srcdir + " -> " + desdir + " ");
+    return p.then(function(){
+      fsExtra.removeSync(maindir);
+      if (useSymlink) {
+        return fsExtra.ensureSymlinkSync(desdir, maindir);
+      } else {
+        return fsExtra.copySync(desdir, maindir);
+      }
     });
-    if (mainFile.js && !localModule) {
-      srcFile = path.join(root, mainFile.js);
-      desFile = path.join(desdir, "index.js");
-      if (!fs.existsSync(desFile)) {
-        fsExtra.copySync(srcFile, desFile);
-        console.log("[JS ]".green, " -- " + srcFile + " --> " + desFile + " ");
-      }
-    }
-    if (mainFile.css && !localModule) {
-      srcFile = path.join(root, mainFile.css);
-      desFile = path.join(desdir, "index.css");
-      if (!fs.existsSync(desFile)) {
-        fsExtra.copySync(srcFile, desFile);
-        console.log("[CSS]".green, " -- " + srcFile + " --> " + desFile + " ");
-      }
-    }
-  }
-  return p.then(function(){
-    fsExtra.removeSync(maindir);
-    if (useSymlink) {
-      return fsExtra.ensureSymlinkSync(desdir, maindir);
-    } else {
-      return fsExtra.copySync(desdir, maindir);
-    }
   });
-});
+}
 function import$(obj, src){
   var own = {}.hasOwnProperty;
   for (var key in src) if (own.call(src, key)) obj[key] = src[key];

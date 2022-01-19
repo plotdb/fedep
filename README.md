@@ -60,6 +60,39 @@ If object is used, it contains following fields:
    - always false if `browserify` is set to true.
 
 
+## Publish
+
+Use `npx fedep publish` to publish based on `dist` folder along with core files such as `package.json`. For example, say you have following directory structure:
+
+ - dist
+   - index.js
+ - README.md
+ - CHANGELOG.md
+ - package.json
+ - LICENSE
+
+`npx fedep publish` merge above content into `.fedep/publish` as below:
+
+ - .fedep/publish
+   - index.js
+   - README.md
+   - CHANGELOG.md
+   - package.json
+   - LICENSE
+
+and trigger `npm publish --access public .fedep/publish`. Additionally, `npx fedep publish` also alters copied `package.json` with following changes to reflect the change of the directory structure:
+
+ - `files` field removed
+ - file path in following fields are converted from relative to `root` to relative to `dist`:
+   - `style`, `browser`, `module`, `main`, `unpkg`
+
+We may add additional feature for `publish` such as:
+
+ - customized folder name ( now we only support `dist` )
+ - customized core files
+ - customized field names to alter
+
+
 ## Alternatives
 
 see also: 

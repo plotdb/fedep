@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.1.0
+
+ - add `publish` command, which publish `dist` folder as root along with core files such as `package.json`, etc
+
+
 ## v1.0.1
 
  - add missed `@plotdb/colors` module
