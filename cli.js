@@ -107,7 +107,7 @@ cmds['default'] = {
               return rej(new Error(e));
             }
             fs.writeFileSync(path.join(desdir, name + ".js"), buf);
-            console.log(" -- ", "(module -> browserify)".green, " -> " + desdir + " ");
+            console.log(" --", "(module -> browserify)".green, "-> " + desdir + " ");
             return res();
           });
         });
@@ -136,7 +136,7 @@ cmds['default'] = {
           desFile = path.join(desdir, "index.js");
           if (!fs.existsSync(desFile)) {
             fsExtra.copySync(srcFile, desFile);
-            console.log(" -- ", "[JS]".green, " " + srcFile + " --> " + desFile + " ");
+            console.log(" --", "[JS]".green, srcFile + " --> " + desFile + " ");
           }
         }
         if (mainFile.css && !localModule) {
@@ -144,7 +144,7 @@ cmds['default'] = {
           desFile = path.join(desdir, "index.css");
           if (!fs.existsSync(desFile)) {
             fsExtra.copySync(srcFile, desFile);
-            console.log(" -- ", "[CSS]".green, " " + srcFile + " --> " + desFile + " ");
+            console.log(" --", "[CSS]".green, srcFile + " --> " + desFile + " ");
           }
         }
       }
@@ -206,14 +206,14 @@ cmds.publish = {
     });
   },
   handler: function(argv){
-    var srcFolder, workFolder, packageJson, json, files, exec;
+    var srcFolder, workFolder, packageJson, json, files, re, exec;
     srcFolder = argv.f || "dist";
     workFolder = ".fedep/publish";
     if (fs.existsSync(workFolder)) {
       fsExtra.removeSync(workFolder);
     }
     if (!fs.existsSync(srcFolder)) {
-      console.error("fedep only supports publish `dist` folder, while `dist` folder doesn't exist.");
+      console.error("specified publish folder `" + srcFolder + "` doesn't exist. exit.");
       process.exit();
     }
     fsExtra.ensureDirSync(workFolder);
@@ -233,15 +233,16 @@ cmds.publish = {
       return a.concat(b);
     }, []);
     if (!argv.d) {
+      re = new RegExp("^" + srcFolder);
       files = files.filter(function(it){
-        return !/^dist/.exec(it);
+        return !re.exec(it);
       });
     }
     files.map(function(f){
       var des;
       des = path.join(workFolder, f);
       fsExtra.ensureDirSync(path.dirname(des));
-      console.log(" -- ", "[COPY]".green, " " + f + " -> " + des);
+      console.log(" --", "[COPY]".green, f + " -> " + des);
       return fsExtra.copySync(f, des);
     });
     ['style', 'module', 'main', 'browser', 'unpkg'].map(function(field){

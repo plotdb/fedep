@@ -4,6 +4,7 @@
 
  - separate commands with yargs sub command features
  - support `folder` (default `dist`) and `dup` (default `false`) options in `publish` command.
+ - tweak messages
 
 
 ## v1.1.1

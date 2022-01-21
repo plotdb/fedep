@@ -70,7 +70,7 @@ cmds.default =
           b.bundle (e, buf) ->
             if e => return rej new Error(e)
             fs.write-file-sync path.join(desdir, "#name.js"), buf
-            console.log " -- ", "(module -> browserify)".green, " -> #desdir "
+            console.log " --", "(module -> browserify)".green, "-> #desdir "
             res!
       else
         if obj.dir => srcdir = path.join(root, obj.dir)
@@ -88,14 +88,14 @@ cmds.default =
           des-file = path.join(desdir, "index.js")
           if !fs.exists-sync(des-file) =>
             fs-extra.copy-sync src-file, des-file
-            console.log " -- ", "[JS]".green, " #src-file --> #des-file "
+            console.log " --", "[JS]".green, "#src-file --> #des-file "
 
         if main-file.css and !local-module =>
           src-file = path.join(root, main-file.css)
           des-file = path.join(desdir, "index.css")
           if !fs.exists-sync(des-file) =>
             fs-extra.copy-sync src-file, des-file
-            console.log " -- ", "[CSS]".green, " #src-file --> #des-file "
+            console.log " --", "[CSS]".green, "#src-file --> #des-file "
 
       p.then ->
         fs-extra.remove-sync maindir
@@ -135,7 +135,7 @@ cmds.publish =
     work-folder = ".fedep/publish"
     if fs.exists-sync work-folder => fs-extra.remove-sync work-folder
     if !fs.exists-sync(src-folder) =>
-      console.error "fedep only supports publish `dist` folder, while `dist` folder doesn't exist."
+      console.error "specified publish folder `#{src-folder}` doesn't exist. exit."
       process.exit!
 
     fs-extra.ensure-dir-sync work-folder
@@ -151,12 +151,14 @@ cmds.publish =
     files = (json.files or [])
       .map (item) -> ret = glob.sync item
       .reduce(((a,b) -> a ++ b),[])
-    if !argv.d => files = files.filter -> !/^dist/.exec(it)
+    if !argv.d =>
+      re = new RegExp("^#{src-folder}")
+      files = files.filter -> !re.exec(it)
 
     files.map (f) ->
       des = path.join(work-folder, f)
       fs-extra.ensure-dir-sync path.dirname(des)
-      console.log " -- ","[COPY]".green, " #f -> #des"
+      console.log " --","[COPY]".green, "#f -> #des"
       fs-extra.copy-sync(f, des)
 
     <[style module main browser unpkg]>.map (field) ->
