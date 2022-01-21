@@ -1,5 +1,11 @@
 # Change Logs
 
+## v1.1.2
+
+ - separate commands with yargs sub command features
+ - support `folder` (default `dist`) and `dup` (default `false`) options in `publish` command.
+
+
 ## v1.1.1
 
  - make `publish` keep files in `files` but still dup `dist` files in root

@@ -86,11 +86,14 @@ and trigger `npm publish --access public .fedep/publish`. Additionally, `npx fed
  - file path in following fields are converted from relative to `root` to relative to `dist`:
    - `style`, `browser`, `module`, `main`, `unpkg`
 
-We may add additional feature for `publish` such as:
+`publish` command also publish files listed in `files` field, with their original directory structure, except `dist` folder. `dist` is by default removed with its content moved to root. To keep `dist` folder, use `--dup true` option:
 
- - customized folder name ( now we only support `dist` )
- - customized core files
- - customized field names to alter
+    npx fedep publish --dup true
+
+You can also use a different dist folder by `folder` option:
+
+    npx fedep publish --folder another-dist
+
 
 
 ## Alternatives
