@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-require! <[@plotdb/colors fs path os fs-extra browserify yargs child_process]>
+require! <[@plotdb/colors fs path os fs-extra browserify yargs child_process glob]>
 
 argv = yargs
   .option \symlink, do
@@ -47,16 +47,30 @@ else if cmd == \publish =>
 
   fs-extra.ensure-dir-sync work-folder
   fs-extra.copy-sync src-folder, work-folder
+
   <[README README.md package.json LICENSE CHANGELOG.md]>.map ->
     if !fs.exists-sync(it) => return
     fs-extra.copy-sync it, path.join(work-folder, it)
 
   package-json = path.join(work-folder, "package.json")
   json = JSON.parse(fs.read-file-sync package-json .toString!)
-  delete json.files
+
+  files = (json.files or [])
+    .map (item) -> ret = glob.sync item
+    .reduce(((a,b) -> a ++ b),[])
+
+  files.map (f) ->
+    des = path.join(work-folder, f)
+    fs-extra.ensure-dir-sync path.dirname(des)
+    console.log "#f -> #des"
+    fs-extra.copy-sync(f, des)
+
   <[style module main browser unpkg]>.map (field) ->
     if !json[field] => return
     json[field] = path.relative(src-folder, json[field])
+
+  # we still have to delete `files` so npm publish all files in worker-folder
+  delete json.files
   fs.write-file-sync package-json, JSON.stringify(json)
 
   exec = (cmd) -> new Promise (res, rej) ->
@@ -64,8 +78,7 @@ else if cmd == \publish =>
     proc.on \exit, -> if (it > 0) => rej new Error! else res!
 
   exec(<[npm publish]> ++ [work-folder] ++ <[--access public]>)
-    .then ->
-      fs.rm-sync work-folder, {recursive: true, force: true}
+    .then -> fs.rm-sync work-folder, {recursive: true, force: true}
 
 else 
 

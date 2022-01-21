@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var colors, fs, path, os, fsExtra, browserify, yargs, child_process, argv, ret, localModules, cmd, json, k, srcFolder, workFolder, packageJson, exec, useSymlink, fed, slice$ = [].slice;
+var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, argv, ret, localModules, cmd, json, k, srcFolder, workFolder, packageJson, files, exec, useSymlink, fed, slice$ = [].slice;
 colors = require('@plotdb/colors');
 fs = require('fs');
 path = require('path');
@@ -8,6 +8,7 @@ fsExtra = require('fs-extra');
 browserify = require('browserify');
 yargs = require('yargs');
 child_process = require('child_process');
+glob = require('glob');
 argv = yargs.option('symlink', {
   alias: 's',
   description: "use symlink instead of hard copy to make main folder. default true",
@@ -80,13 +81,26 @@ if (cmd === 'init') {
   });
   packageJson = path.join(workFolder, "package.json");
   json = JSON.parse(fs.readFileSync(packageJson).toString());
-  delete json.files;
+  files = (json.files || []).map(function(item){
+    var ret;
+    return ret = glob.sync(item);
+  }).reduce(function(a, b){
+    return a.concat(b);
+  }, []);
+  files.map(function(f){
+    var des;
+    des = path.join(workFolder, f);
+    fsExtra.ensureDirSync(path.dirname(des));
+    console.log(f + " -> " + des);
+    return fsExtra.copySync(f, des);
+  });
   ['style', 'module', 'main', 'browser', 'unpkg'].map(function(field){
     if (!json[field]) {
       return;
     }
     return json[field] = path.relative(srcFolder, json[field]);
   });
+  delete json.files;
   fs.writeFileSync(packageJson, JSON.stringify(json));
   exec = function(cmd){
     return new Promise(function(res, rej){

@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.1.1
+
+ - make `publish` keep files in `files` but still dup `dist` files in root
+
+
 ## v1.1.0
 
  - add `publish` command, which publish `dist` folder as root along with core files such as `package.json`, etc
