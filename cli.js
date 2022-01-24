@@ -126,7 +126,12 @@ cmds['default'] = {
           fsExtra.removeSync(desdir);
           fsExtra.ensureSymlinkSync(srcdir, desdir);
         } else {
-          fsExtra.copySync(srcdir, desdir);
+          fsExtra.copySync(srcdir, desdir, {
+            dereference: true,
+            filter: function(it){
+              return !/.+\/node_modules/.exec(it);
+            }
+          });
         }
         p = Promise.resolve().then(function(){
           return console.log(" -- " + srcdir + " -> " + desdir + " ");

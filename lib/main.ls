@@ -81,7 +81,7 @@ cmds.default =
         if local-module or obj.link =>
           fs-extra.remove-sync desdir
           fs-extra.ensure-symlink-sync srcdir, desdir
-        else fs-extra.copy-sync srcdir, desdir
+        else fs-extra.copy-sync srcdir, desdir, {dereference: true, filter: -> !/.+\/node_modules/.exec(it)}
         p = Promise.resolve!then -> console.log " -- #srcdir -> #desdir "
         if main-file.js and !local-module =>
           src-file = path.join(root, main-file.js)

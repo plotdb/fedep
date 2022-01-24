@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.1.3
+
+ - copy contente of symlink if module in `node_modules` is a symbolic link.
+
+
 ## v1.1.2
 
  - separate commands with yargs sub command features
