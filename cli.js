@@ -47,7 +47,7 @@ cmds['default'] = {
       modules: []
     }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
     return (fed.modules || []).map(function(obj){
-      var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, srcFile, desFile;
+      var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcDir, srcFile, desFile;
       obj = typeof obj === 'string' ? {
         name: obj
       } : obj;
@@ -126,17 +126,24 @@ cmds['default'] = {
           fsExtra.removeSync(desdir);
           fsExtra.ensureSymlinkSync(srcdir, desdir);
         } else {
-          fsExtra.copySync(srcdir, desdir, {
-            dereference: true,
-            filter: function(it){
-              return !/.+\/node_modules/.exec(it);
-            }
-          });
+          if (fs.lstatSync(srcdir).isSymbolicLink()) {
+            obj.link = true;
+            fsExtra.removeSync(desdir);
+            realSrcDir = path.resolve(path.join(path.dirname(srcdir), fs.readlinkSync(srcdir)));
+            fsExtra.ensureSymlinkSync(realSrcDir, desdir);
+          } else {
+            fsExtra.copySync(srcdir, desdir, {
+              dereference: true,
+              filter: function(it){
+                return !/.+\/node_modules|\/\.git/.exec(it);
+              }
+            });
+          }
         }
         p = Promise.resolve().then(function(){
           return console.log(" -- " + srcdir + " -> " + desdir + " ");
         });
-        if (mainFile.js && !localModule) {
+        if (!obj.link && mainFile.js && !localModule) {
           srcFile = path.join(root, mainFile.js);
           desFile = path.join(desdir, "index.js");
           if (!fs.existsSync(desFile)) {
@@ -144,7 +151,7 @@ cmds['default'] = {
             console.log(" --", "[JS]".green, srcFile + " --> " + desFile + " ");
           }
         }
-        if (mainFile.css && !localModule) {
+        if (!obj.link && mainFile.css && !localModule) {
           srcFile = path.join(root, mainFile.css);
           desFile = path.join(desdir, "index.css");
           if (!fs.existsSync(desFile)) {

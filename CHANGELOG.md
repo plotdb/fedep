@@ -1,5 +1,13 @@
 # Change Logs
 
+## v1.1.4
+
+ - don`t copy JS / CSS files based on `browser` / `style` field if `main` folder is by link instead of by copying.
+ - instead of copying, making a symlink by following symlink in `node_modules`.
+   - symlink usually is for local dev files, which may contains many things we dont need as a module.
+     thus copying isn't the best way which may copy files like `.git` or `node_modules`.
+
+
 ## v1.1.3
 
  - copy contente of symlink if module in `node_modules` is a symbolic link.

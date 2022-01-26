@@ -81,16 +81,27 @@ cmds.default =
         if local-module or obj.link =>
           fs-extra.remove-sync desdir
           fs-extra.ensure-symlink-sync srcdir, desdir
-        else fs-extra.copy-sync srcdir, desdir, {dereference: true, filter: -> !/.+\/node_modules/.exec(it)}
+        else
+          if fs.lstat-sync srcdir .is-symbolic-link! =>
+            obj.link = true
+            fs-extra.remove-sync desdir
+            real-src-dir = path.resolve(path.join(path.dirname(srcdir), fs.readlink-sync(srcdir)))
+            fs-extra.ensure-symlink-sync real-src-dir, desdir
+          else
+            fs-extra.copy-sync(
+              srcdir, desdir,
+              {dereference: true, filter: -> !/.+\/node_modules|\/\.git/.exec(it)}
+            )
+
         p = Promise.resolve!then -> console.log " -- #srcdir -> #desdir "
-        if main-file.js and !local-module =>
+        if !obj.link and main-file.js and !local-module =>
           src-file = path.join(root, main-file.js)
           des-file = path.join(desdir, "index.js")
           if !fs.exists-sync(des-file) =>
             fs-extra.copy-sync src-file, des-file
             console.log " --", "[JS]".green, "#src-file --> #des-file "
 
-        if main-file.css and !local-module =>
+        if !obj.link and main-file.css and !local-module =>
           src-file = path.join(root, main-file.css)
           des-file = path.join(desdir, "index.css")
           if !fs.exists-sync(des-file) =>
