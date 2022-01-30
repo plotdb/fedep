@@ -85,8 +85,12 @@ cmds.default =
           if fs.lstat-sync srcdir .is-symbolic-link! =>
             obj.link = true
             fs-extra.remove-sync desdir
-            real-src-dir = path.resolve(path.join(path.dirname(srcdir), fs.readlink-sync(srcdir)))
-            fs-extra.ensure-symlink-sync real-src-dir, desdir
+            real-srcdir = path.resolve(path.join(path.dirname(srcdir), fs.readlink-sync(srcdir)))
+            fs-extra.ensure-symlink-sync real-srcdir, desdir
+          else if fs.lstat-sync root .is-symbolic-link! =>
+            obj.link = true
+            fs-extra.remove-sync desdir
+            fs-extra.ensure-symlink-sync srcdir, desdir
           else
             fs-extra.copy-sync(
               srcdir, desdir,

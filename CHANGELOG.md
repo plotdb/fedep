@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.1.5
+
+ - still symlink if srcdir is not a symlink but root is a symlink. usually happens when we specify `dir` in config.
+
+
 ## v1.1.4
 
  - don`t copy JS / CSS files based on `browser` / `style` field if `main` folder is by link instead of by copying.

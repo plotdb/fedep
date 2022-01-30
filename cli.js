@@ -47,7 +47,7 @@ cmds['default'] = {
       modules: []
     }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
     return (fed.modules || []).map(function(obj){
-      var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcDir, srcFile, desFile;
+      var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcdir, srcFile, desFile;
       obj = typeof obj === 'string' ? {
         name: obj
       } : obj;
@@ -129,8 +129,12 @@ cmds['default'] = {
           if (fs.lstatSync(srcdir).isSymbolicLink()) {
             obj.link = true;
             fsExtra.removeSync(desdir);
-            realSrcDir = path.resolve(path.join(path.dirname(srcdir), fs.readlinkSync(srcdir)));
-            fsExtra.ensureSymlinkSync(realSrcDir, desdir);
+            realSrcdir = path.resolve(path.join(path.dirname(srcdir), fs.readlinkSync(srcdir)));
+            fsExtra.ensureSymlinkSync(realSrcdir, desdir);
+          } else if (fs.lstatSync(root).isSymbolicLink()) {
+            obj.link = true;
+            fsExtra.removeSync(desdir);
+            fsExtra.ensureSymlinkSync(srcdir, desdir);
           } else {
             fsExtra.copySync(srcdir, desdir, {
               dereference: true,
