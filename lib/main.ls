@@ -30,6 +30,12 @@ cmds.default =
       root: '.', modules: []
     } <<< (JSON.parse(fs.read-file-sync "package.json" .toString!).frontendDependencies or {})
 
+    ext-modules = local-modules.filter((o) -> !(fed.modules.filter(->it.name == o.name).length))
+    if ext-modules.length =>
+      console.warn "following modules are not listed in fedep modules. still installed:".yellow
+      console.warn ext-modules.map(->" - #{it.name}").join(\\n).yellow
+      fed.modules ++= ext-modules.map(-> it.name)
+
     (fed.modules or []).map (obj) ->
       obj = if typeof(obj) == \string => {name: obj} else obj
       local-module = local-modules.filter(-> it.name == obj.name).0
@@ -115,6 +121,7 @@ cmds.default =
       p.then ->
         fs-extra.remove-sync maindir
         if use-symlink => fs-extra.ensure-symlink-sync desdir, maindir
+        else if fs.lstat-sync desdir .is-symbolic-link! => fs-extra.copy-sync srcdir, maindir
         else fs-extra.copy-sync desdir, maindir
 
 

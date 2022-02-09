@@ -1,5 +1,11 @@
 # Change Logs
 
+## v1.1.6
+
+ - make `-s false` work for symlink ( e.g., `local` ) folder
+ - warn but install modules not listed in fedep modules in `pacakge.json` ( usually from `-l` option )
+
+
 ## v1.1.5
 
  - still symlink if srcdir is not a symlink but root is a symlink. usually happens when we specify `dir` in config.

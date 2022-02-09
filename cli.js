@@ -27,7 +27,7 @@ cmds['default'] = {
     });
   },
   handler: function(argv){
-    var ret, localModules, useSymlink, fed;
+    var ret, localModules, useSymlink, fed, extModules;
     if (argv.l) {
       ret = argv.l.split(';').map(function(it){
         return it.split(':');
@@ -46,6 +46,20 @@ cmds['default'] = {
       root: '.',
       modules: []
     }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
+    extModules = localModules.filter(function(o){
+      return !fed.modules.filter(function(it){
+        return it.name === o.name;
+      }).length;
+    });
+    if (extModules.length) {
+      console.warn("following modules are not listed in fedep modules. still installed:".yellow);
+      console.warn(extModules.map(function(it){
+        return " - " + it.name;
+      }).join('\n').yellow);
+      fed.modules = fed.modules.concat(extModules.map(function(it){
+        return it.name;
+      }));
+    }
     return (fed.modules || []).map(function(obj){
       var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcdir, srcFile, desFile;
       obj = typeof obj === 'string' ? {
@@ -168,6 +182,8 @@ cmds['default'] = {
         fsExtra.removeSync(maindir);
         if (useSymlink) {
           return fsExtra.ensureSymlinkSync(desdir, maindir);
+        } else if (fs.lstatSync(desdir).isSymbolicLink()) {
+          return fsExtra.copySync(srcdir, maindir);
         } else {
           return fsExtra.copySync(desdir, maindir);
         }
