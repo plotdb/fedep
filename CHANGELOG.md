@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.1.7
+
+ - fix bug: dup installation of local module: ext modules incorrect due to local module filtering bug.
+
+
 ## v1.1.6
 
  - make `-s false` work for symlink ( e.g., `local` ) folder

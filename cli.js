@@ -48,7 +48,7 @@ cmds['default'] = {
     }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
     extModules = localModules.filter(function(o){
       return !fed.modules.filter(function(it){
-        return it.name === o.name;
+        return it === o.name;
       }).length;
     });
     if (extModules.length) {
