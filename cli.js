@@ -61,7 +61,7 @@ cmds['default'] = {
       }));
     }
     return (fed.modules || []).map(function(obj){
-      var localModule, root, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcdir, srcFile, desFile;
+      var localModule, root, base, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcdir, srcFile, desFile;
       obj = typeof obj === 'string' ? {
         name: obj
       } : obj;
@@ -74,7 +74,14 @@ cmds['default'] = {
       if (localModule) {
         root = localModule.path;
       } else {
-        root = path.join("node_modules", obj.name);
+        base = '.';
+        while (root !== '/') {
+          root = path.resolve(path.join(base, 'node_modules', obj.name));
+          if (fs.existsSync(root)) {
+            break;
+          }
+          base = path.join(base, '..');
+        }
       }
       info = JSON.parse(fs.readFileSync(path.join(root, "package.json")).toString());
       id = info._id || info.name + "@" + info.version;

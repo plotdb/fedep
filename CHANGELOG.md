@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.1.8
+
+ - support modules from parent `node_modeuls`
+
+
 ## v1.1.7
 
  - fix bug: dup installation of local module: ext modules incorrect due to local module filtering bug.

@@ -41,7 +41,13 @@ cmds.default =
       local-module = local-modules.filter(-> it.name == obj.name).0
       if local-modules.length and !local-module => return
       if local-module => root = local-module.path
-      else root = path.join("node_modules", obj.name)
+      else
+        base = '.'
+        while root != \/
+          root = path.resolve(path.join base, \node_modules, obj.name)
+          if fs.exists-sync(root) => break
+          base = path.join(base, \..)
+
       info = JSON.parse(fs.read-file-sync path.join(root, "package.json") .toString!)
       id = info._id or "#{info.name}@#{info.version}"
 
