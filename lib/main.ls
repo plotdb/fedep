@@ -43,9 +43,9 @@ cmds.default =
       if local-module => root = local-module.path
       else
         base = '.'
-        while root != \/
+        while path.resolve(base) != \/
           root = path.resolve(path.join base, \node_modules, obj.name)
-          if fs.exists-sync(root) => break
+          if fs.exists-sync(path.join(root, \package.json)) => break
           base = path.join(base, \..)
 
       info = JSON.parse(fs.read-file-sync path.join(root, "package.json") .toString!)

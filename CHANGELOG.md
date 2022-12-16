@@ -1,8 +1,13 @@
 # Change Logs
 
+## v1.1.9
+
+ - fix bug: `node_modules` lookup may fall into endless loop and halt the program.
+
+
 ## v1.1.8
 
- - support modules from parent `node_modeuls`
+ - support modules from parent `node_modules`
 
 
 ## v1.1.7

@@ -75,9 +75,9 @@ cmds['default'] = {
         root = localModule.path;
       } else {
         base = '.';
-        while (root !== '/') {
+        while (path.resolve(base) !== '/') {
           root = path.resolve(path.join(base, 'node_modules', obj.name));
-          if (fs.existsSync(root)) {
+          if (fs.existsSync(path.join(root, 'package.json'))) {
             break;
           }
           base = path.join(base, '..');
