@@ -161,7 +161,7 @@ cmds['default'] = {
             fsExtra.copySync(srcdir, desdir, {
               dereference: true,
               filter: function(it){
-                return !/.+\/node_modules|\/\.git/.exec(it);
+                return !/.+[^.]\/node_modules|\/\.git/.exec(it);
               }
             });
           }

@@ -107,7 +107,10 @@ cmds.default =
           else
             fs-extra.copy-sync(
               srcdir, desdir,
-              {dereference: true, filter: -> !/.+\/node_modules|\/\.git/.exec(it)}
+              # for parent node_modules, there will always be a dot before `node_modules`.
+              # but we want to remove files under `node_modules` inside srcdir,
+              # which will be `/[^.]/node_modules`
+              {dereference: true, filter: -> !/.+[^.]\/node_modules|\/\.git/.exec(it)}
             )
 
         p = Promise.resolve!then -> console.log " -- #srcdir -> #desdir "

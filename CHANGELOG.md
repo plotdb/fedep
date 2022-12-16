@@ -1,5 +1,11 @@
 # Change Logs
 
+## v1.1.11
+
+ - fix bug: `srcdir` contain keywrods that are filtered out, making a empty lib folder.
+   - 1.1.10 patched `srcdir` however the result still get blocked by filter rules of `copySync`.
+
+
 ## v1.1.10
 
  - fix bug: `srcdir` contain keywrods that are filtered out, making a empty lib folder.
