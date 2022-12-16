@@ -82,6 +82,7 @@ cmds['default'] = {
           }
           base = path.join(base, '..');
         }
+        root = path.relative('.', root);
       }
       info = JSON.parse(fs.readFileSync(path.join(root, "package.json")).toString());
       id = info._id || info.name + "@" + info.version;

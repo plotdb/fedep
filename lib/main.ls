@@ -47,6 +47,7 @@ cmds.default =
           root = path.resolve(path.join base, \node_modules, obj.name)
           if fs.exists-sync(path.join(root, \package.json)) => break
           base = path.join(base, \..)
+        root = path.relative('.', root)
 
       info = JSON.parse(fs.read-file-sync path.join(root, "package.json") .toString!)
       id = info._id or "#{info.name}@#{info.version}"

@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.1.10
+
+ - fix bug: `srcdir` contain keywrods that are filtered out, making a empty lib folder.
+
+
 ## v1.1.9
 
  - fix bug: `node_modules` lookup may fall into endless loop and halt the program.
