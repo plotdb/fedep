@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.1.12 (upcoming)
+
+ - upgrade dependencies
+
+
 ## v1.1.11
 
  - fix bug: `srcdir` contain keywrods that are filtered out, making a empty lib folder.
