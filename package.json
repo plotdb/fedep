@@ -17,16 +17,16 @@
     "npm": ">=6.4.1"
   },
   "dependencies": {
-    "@plotdb/colors": "^0.0.1",
+    "@plotdb/colors": "^0.0.3",
     "browserify": "^17.0.0",
     "fs-extra": "^9.0.1",
     "glob": "^7.2.0",
     "yargs": "^16.1.0"
   },
   "devDependencies": {
-    "@zbryikt/template": "^2.3.21",
-    "ldcover": "^2.1.0",
-    "ldview": "^0.2.3",
+    "@zbryikt/template": "^2.3.45",
+    "ldcover": "^3.5.3",
+    "ldview": "^1.4.0",
     "livescript": "^1.6.0"
   },
   "bin": {
