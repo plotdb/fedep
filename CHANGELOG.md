@@ -1,6 +1,6 @@
 # Change Logs
 
-## v1.1.12 (upcoming)
+## v1.1.12
 
  - skip optional dependencies that are not installed
  - tweak message style
