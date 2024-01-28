@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 require! <[@plotdb/colors fs path os fs-extra browserify yargs child_process glob]>
 
+quit = -> console.error(Array.from(arguments).join('')); process.exit!
+
 cmds = {}
 cmds.default =
   command: \$0
@@ -26,17 +28,18 @@ cmds.default =
 
     use-symlink = if argv.s? => argv.s else true
 
-    fed = {
-      root: '.', modules: []
-    } <<< (JSON.parse(fs.read-file-sync "package.json" .toString!).frontendDependencies or {})
+    pkg = JSON.parse(fs.read-file-sync "package.json" .toString!)
+    fed = {root: '.', modules: []} <<< (pkg.frontendDependencies or {})
 
     ext-modules = local-modules.filter((o) -> !(fed.modules.filter(->it == o.name).length))
     if ext-modules.length =>
-      console.warn "following modules are not listed in fedep modules. still installed:".yellow
+      console.warn "[WARN] following modules are not listed in fedep modules. still installed:".yellow
       console.warn ext-modules.map(->" - #{it.name}").join(\\n).yellow
+      console.warn ""
       fed.modules ++= ext-modules.map(-> it.name)
 
-    (fed.modules or []).map (obj) ->
+    skips = []
+    all-promises = (fed.modules or []).map (obj) ->
       obj = if typeof(obj) == \string => {name: obj} else obj
       local-module = local-modules.filter(-> it.name == obj.name).0
       if local-modules.length and !local-module => return
@@ -49,14 +52,24 @@ cmds.default =
           base = path.join(base, \..)
         root = path.relative('.', root)
 
+      if !fs.exists-sync(path.join root, \package.json) =>
+        if !(pkg.optionalDependencies or {})[obj.name] =>
+          quit " -- [ERROR] Module `".red, obj.name.brightYellow, "` is not found. Failed.".red
+        skips.push(name: obj.name, reason: "it is an optional dependency and is not installed")
+        return console.warn [
+          " -- [WARN] Optional dependencies `".yellow, obj.name.brightYellow, "` is not found. Skipped.".yellow
+        ].join('')
+
       info = JSON.parse(fs.read-file-sync path.join(root, "package.json") .toString!)
+
       id = info._id or "#{info.name}@#{info.version}"
 
       main-file =
         js: [info.browser, info.main].filter(-> /\.js/.exec(it)).0
         css: [info.style, info.browser, info.main].filter(-> /\.css/.exec(it)).0
 
-      if /\.\.|^\//.exec(id) => throw new Error("fedep: not supported name in module #{obj.name}.")
+      if /\.\.|^\//.exec(id) =>
+        quit " -- [ERROR] not supported id `#{id}` in module `".red, obj.name.brightYellow, "`.".red
       [...name,version] = id.split("@")
 
       # TODO we may need a better approach for version resolving if semver cannot be found.
@@ -133,6 +146,10 @@ cmds.default =
         if use-symlink => fs-extra.ensure-symlink-sync desdir, maindir
         else if fs.lstat-sync desdir .is-symbolic-link! => fs-extra.copy-sync srcdir, maindir
         else fs-extra.copy-sync desdir, maindir
+    Promise.all all-promises .then ->
+      if skips.length =>
+        console.warn "[WARN] Skipped module#{if skips.length > 1 => \s else ''}:".yellow
+        skips.map (s) -> console.warn " -", s.name.brightYellow, if s.reason => "(#{s.reason})".gray else ''
 
 
 cmds.init =
@@ -167,7 +184,7 @@ cmds.publish =
     work-folder = ".fedep/publish"
     if fs.exists-sync work-folder => fs-extra.remove-sync work-folder
     if !fs.exists-sync(src-folder) =>
-      console.error "specified publish folder `#{src-folder}` doesn't exist. exit."
+      console.error "[ERROR] specified publish folder `".red + src-folder.brightYellow + "` doesn't exist. exit.".red
       process.exit!
 
     fs-extra.ensure-dir-sync work-folder

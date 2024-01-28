@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, cmds, slice$ = [].slice;
+var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, quit, cmds, slice$ = [].slice;
 colors = require('@plotdb/colors');
 fs = require('fs');
 path = require('path');
@@ -9,6 +9,10 @@ browserify = require('browserify');
 yargs = require('yargs');
 child_process = require('child_process');
 glob = require('glob');
+quit = function(){
+  console.error(Array.from(arguments).join(''));
+  return process.exit();
+};
 cmds = {};
 cmds['default'] = {
   command: '$0',
@@ -27,7 +31,7 @@ cmds['default'] = {
     });
   },
   handler: function(argv){
-    var ret, localModules, useSymlink, fed, extModules;
+    var ret, localModules, useSymlink, pkg, fed, extModules, skips, allPromises;
     if (argv.l) {
       ret = argv.l.split(';').map(function(it){
         return it.split(':');
@@ -42,25 +46,28 @@ cmds['default'] = {
       localModules = [];
     }
     useSymlink = argv.s != null ? argv.s : true;
+    pkg = JSON.parse(fs.readFileSync("package.json").toString());
     fed = import$({
       root: '.',
       modules: []
-    }, JSON.parse(fs.readFileSync("package.json").toString()).frontendDependencies || {});
+    }, pkg.frontendDependencies || {});
     extModules = localModules.filter(function(o){
       return !fed.modules.filter(function(it){
         return it === o.name;
       }).length;
     });
     if (extModules.length) {
-      console.warn("following modules are not listed in fedep modules. still installed:".yellow);
+      console.warn("[WARN] following modules are not listed in fedep modules. still installed:".yellow);
       console.warn(extModules.map(function(it){
         return " - " + it.name;
       }).join('\n').yellow);
+      console.warn("");
       fed.modules = fed.modules.concat(extModules.map(function(it){
         return it.name;
       }));
     }
-    return (fed.modules || []).map(function(obj){
+    skips = [];
+    allPromises = (fed.modules || []).map(function(obj){
       var localModule, root, base, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcdir, srcFile, desFile;
       obj = typeof obj === 'string' ? {
         name: obj
@@ -84,6 +91,16 @@ cmds['default'] = {
         }
         root = path.relative('.', root);
       }
+      if (!fs.existsSync(path.join(root, 'package.json'))) {
+        if (!(pkg.optionalDependencies || {})[obj.name]) {
+          quit(" -- [ERROR] Module `".red, obj.name.brightYellow, "` is not found. Failed.".red);
+        }
+        skips.push({
+          name: obj.name,
+          reason: "it is an optional dependency and is not installed"
+        });
+        return console.warn([" -- [WARN] Optional dependencies `".yellow, obj.name.brightYellow, "` is not found. Skipped.".yellow].join(''));
+      }
       info = JSON.parse(fs.readFileSync(path.join(root, "package.json")).toString());
       id = info._id || info.name + "@" + info.version;
       mainFile = {
@@ -95,7 +112,7 @@ cmds['default'] = {
         })[0]
       };
       if (/\.\.|^\//.exec(id)) {
-        throw new Error("fedep: not supported name in module " + obj.name + ".");
+        quit((" -- [ERROR] not supported id `" + id + "` in module `").red, obj.name.brightYellow, "`.".red);
       }
       ref$ = id.split("@"), name = 0 < (i$ = ref$.length - 1) ? slice$.call(ref$, 0, i$) : (i$ = 0, []), version = ref$[i$];
       if (ret = /#([a-zA-Z0-9_.-]+)$/.exec(version)) {
@@ -197,6 +214,14 @@ cmds['default'] = {
         }
       });
     });
+    return Promise.all(allPromises).then(function(){
+      if (skips.length) {
+        console.warn(("[WARN] Skipped module" + (skips.length > 1 ? 's' : '') + ":").yellow);
+        return skips.map(function(s){
+          return console.warn(" -", s.name.brightYellow, s.reason ? ("(" + s.reason + ")").gray : '');
+        });
+      }
+    });
   }
 };
 cmds.init = {
@@ -253,7 +278,7 @@ cmds.publish = {
       fsExtra.removeSync(workFolder);
     }
     if (!fs.existsSync(srcFolder)) {
-      console.error("specified publish folder `" + srcFolder + "` doesn't exist. exit.");
+      console.error("[ERROR] specified publish folder `".red + srcFolder.brightYellow + "` doesn't exist. exit.".red);
       process.exit();
     }
     fsExtra.ensureDirSync(workFolder);

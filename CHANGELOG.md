@@ -2,6 +2,8 @@
 
 ## v1.1.12 (upcoming)
 
+ - skip optional dependencies that are not installed
+ - tweak message style
  - upgrade dependencies
 
 
