@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.2.0
+
+ - support transpilation on demand.
+
+
 ## v1.1.12
 
  - skip optional dependencies that are not installed

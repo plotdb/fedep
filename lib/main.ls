@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 require! <[@plotdb/colors fs path os fs-extra browserify yargs child_process glob]>
+babel = require "@babel/core"
 
 quit = -> console.error(Array.from(arguments).join('')); process.exit!
 
@@ -126,7 +127,25 @@ cmds.default =
               {dereference: true, filter: -> !/.+[^.]\/node_modules|\/\.git/.exec(it)}
             )
 
-        p = Promise.resolve!then -> console.log " -- #srcdir -> #desdir "
+          if obj.transpile =>
+            ps = obj.transpile.[]files.map (f) ->
+              (res, rej) <- new Promise _
+              babel-opt = {presets: <[@babel/preset-env]>}
+              src = path.join(srcdir, f)
+              des = path.join(desdir, f)
+              (err, result) <- babel.transform fs.read-file-sync(src).toString!, babel-opt, _
+              if err =>
+                console.error("[ERROR] transpile ".red + (f).brightYellow + " failed: ".red, err)
+                return rej err
+              fs.write-file-sync des, result.code
+              console.log " -- " + "[JS/Transpile]".green + " -> #des"
+              res!
+            p = Promise.all ps .catch (e) ->
+              console.error "[ERROR] exception during transpilatio: ".red, e
+              console.error "exit.".red
+              process.exit!
+
+        p = (p or Promise.resolve!).then -> console.log " -- #srcdir -> #desdir "
         if !obj.link and main-file.js and !local-module =>
           src-file = path.join(root, main-file.js)
           des-file = path.join(desdir, "index.js")

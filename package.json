@@ -6,7 +6,7 @@
     "cli.js"
   ],
   "description": "Frontend dependency installer",
-  "version": "1.1.12",
+  "version": "1.2.0",
   "homepage": "https://github.com/plotdb/fedep",
   "repository": {
     "type": "git",
@@ -17,6 +17,8 @@
     "npm": ">=6.4.1"
   },
   "dependencies": {
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
     "@plotdb/colors": "^0.0.3",
     "browserify": "^17.0.0",
     "fs-extra": "^9.0.1",

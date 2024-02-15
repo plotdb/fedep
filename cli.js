@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, quit, cmds, slice$ = [].slice;
+var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, babel, quit, cmds, slice$ = [].slice;
 colors = require('@plotdb/colors');
 fs = require('fs');
 path = require('path');
@@ -9,6 +9,7 @@ browserify = require('browserify');
 yargs = require('yargs');
 child_process = require('child_process');
 glob = require('glob');
+babel = require("@babel/core");
 quit = function(){
   console.error(Array.from(arguments).join(''));
   return process.exit();
@@ -68,7 +69,7 @@ cmds['default'] = {
     }
     skips = [];
     allPromises = (fed.modules || []).map(function(obj){
-      var localModule, root, base, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcdir, srcFile, desFile;
+      var localModule, root, base, info, id, mainFile, ref$, i$, name, version, ret, that, desdir, maindir, p, srcdir, realSrcdir, ps, srcFile, desFile;
       obj = typeof obj === 'string' ? {
         name: obj
       } : obj;
@@ -182,8 +183,34 @@ cmds['default'] = {
               }
             });
           }
+          if (obj.transpile) {
+            ps = ((ref$ = obj.transpile).files || (ref$.files = [])).map(function(f){
+              return new Promise(function(res, rej){
+                var babelOpt, src, des;
+                babelOpt = {
+                  presets: ['@babel/preset-env']
+                };
+                src = path.join(srcdir, f);
+                des = path.join(desdir, f);
+                return babel.transform(fs.readFileSync(src).toString(), babelOpt, function(err, result){
+                  if (err) {
+                    console.error("[ERROR] transpile ".red + f.brightYellow + " failed: ".red, err);
+                    return rej(err);
+                  }
+                  fs.writeFileSync(des, result.code);
+                  console.log(" -- " + "[JS/Transpile]".green + (" -> " + des));
+                  return res();
+                });
+              });
+            });
+            p = Promise.all(ps)['catch'](function(e){
+              console.error("[ERROR] exception during transpilatio: ".red, e);
+              console.error("exit.".red);
+              return process.exit();
+            });
+          }
         }
-        p = Promise.resolve().then(function(){
+        p = (p || Promise.resolve()).then(function(){
           return console.log(" -- " + srcdir + " -> " + desdir + " ");
         });
         if (!obj.link && mainFile.js && !localModule) {

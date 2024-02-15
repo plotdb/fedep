@@ -58,6 +58,8 @@ If object is used, it contains following fields:
  - `dir`: subdir to copy in this module. default the whole module, if not specified
  - `link`: set true to use symlink instead of copying. default false.
    - always false if `browserify` is set to true.
+ - `transpile`: add this object if you need to transpile module file, which contains following fields:
+   - `files`: a list of file to transpile.
 
 
 ## Publish
