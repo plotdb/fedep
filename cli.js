@@ -93,7 +93,7 @@ cmds['default'] = {
         root = path.relative('.', root);
       }
       if (!fs.existsSync(path.join(root, 'package.json'))) {
-        if (!(pkg.optionalDependencies || {})[obj.name]) {
+        if (!(pkg.optionalDependencies || {})[obj.name] && !obj.optional) {
           quit(" -- [ERROR] Module `".red, obj.name.brightYellow, "` is not found. Failed.".red);
         }
         skips.push({

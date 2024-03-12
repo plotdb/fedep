@@ -60,6 +60,7 @@ If object is used, it contains following fields:
    - always false if `browserify` is set to true.
  - `transpile`: add this object if you need to transpile module file, which contains following fields:
    - `files`: a list of file to transpile.
+ - `optional`: default false. if true, ignore this entry if it can't be found, even if it's not in `optionalDependencies`.
 
 
 ## Publish

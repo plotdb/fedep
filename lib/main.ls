@@ -54,7 +54,7 @@ cmds.default =
         root = path.relative('.', root)
 
       if !fs.exists-sync(path.join root, \package.json) =>
-        if !(pkg.optionalDependencies or {})[obj.name] =>
+        if !(pkg.optionalDependencies or {})[obj.name] and !obj.optional =>
           quit " -- [ERROR] Module `".red, obj.name.brightYellow, "` is not found. Failed.".red
         skips.push(name: obj.name, reason: "it is an optional dependency and is not installed")
         return console.warn [

@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.3.0
+
+ - support `optional` in module format.
+
+
 ## v1.2.0
 
  - support transpilation on demand.
