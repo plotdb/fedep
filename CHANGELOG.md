@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.4.0 (upcoming)
+
+ - support `npx fedep license` command
+
+
 ## v1.3.0
 
  - support `optional` in module format.
