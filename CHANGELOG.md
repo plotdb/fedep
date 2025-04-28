@@ -1,6 +1,6 @@
 # Change Logs
 
-## v1.4.0 (upcoming)
+## v1.4.0
 
  - support `npx fedep license` command
 
