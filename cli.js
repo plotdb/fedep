@@ -382,6 +382,67 @@ cmds.publish = {
     });
   }
 };
+cmds.license = {
+  command: 'license',
+  desc: 'generate or update LICENSE file',
+  builder: function(yargs){
+    return yargs.positional('type', {
+      describe: 'license type, e.g., mit, apache, bsd',
+      type: 'string'
+    });
+  },
+  handler: function(argv){
+    var pkg, e, type, templates, name;
+    pkg = (function(){
+      try {
+        return JSON.parse(fs.readFileSync('package.json').toString());
+      } catch (e$) {
+        e = e$;
+        return quit("[ERROR] Cannot find or parse package.json.".red);
+      }
+    }());
+    type = pkg.license || argv._[1] || argv.type;
+    if (!type) {
+      quit("[ERROR] No license type specified.".red);
+    }
+    type = type.toLowerCase();
+    templates = {
+      isc: 'ISC License\n\nCopyright (c) #{year} #{name}\n\nPermission to use, copy, modify, and/or distribute this software for any\npurpose with or without fee is hereby granted, provided that the above\ncopyright notice and this permission notice appear in all copies.\n\nTHE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES\nWITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF\nMERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR\nANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES\nWHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN\nACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF\nOR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.',
+      mit: 'MIT License\n\nCopyright (c) #{year} #{name}\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the "Software"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.',
+      apache: 'Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nCopyright (c) #{year} #{name}\n\nLicensed under the Apache License, Version 2.0 (the "License");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an "AS IS" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.',
+      bsd: 'BSD 3-Clause License\n\nCopyright (c) #{year}, #{name}\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of #{name} nor the names of its contributors may be used\n  to endorse or promote products derived from this software without specific\n  prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.'
+    };
+    if (!templates[type]) {
+      quit(("[ERROR] Unsupported license type: " + type).red);
+    }
+    name = typeof pkg.author === 'string'
+      ? pkg.author
+      : typeof pkg.author === 'object' ? pkg.author.name : null;
+    return Promise.resolve().then(function(){
+      if (!name) {
+        return getInput("Author name not found. Please enter your name for LICENSE: ");
+      } else {
+        return name;
+      }
+    }).then(function(name){
+      var year, e, license;
+      if (!name) {
+        quit("[ERROR] No author name provided. Cannot generate LICENSE.".red);
+      }
+      year = (function(){
+        try {
+          return execSync('git log --reverse --format=%ad --date=format:%Y').toString().split('\n')[0].trim();
+        } catch (e$) {
+          e = e$;
+          return new Date().getFullYear() + "";
+        }
+      }());
+      license = templates[type].replace(/#{year}/g, year).replace(/#{name}/g, name);
+      fs.writeFileSync("LICENSE", license.trim() + "\n");
+      return console.log(("LICENSE (" + type + ") generated.").green);
+    });
+  }
+};
 arg = yargs;
 for (k in cmds) {
   v = cmds[k];
