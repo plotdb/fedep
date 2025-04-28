@@ -122,21 +122,27 @@ cmds.license =
 
     Promise.resolve!
       .then ->
-        if !name =>
-          get-input "Author name not found. Please enter your name for LICENSE: "
-        else name
+        if name => return name
+        get-input "Author name not found. Please enter your name for LICENSE: "
       .then (name) ->
         unless name
           quit "[ERROR] No author name provided. Cannot generate LICENSE.".red
 
-        year =
-          try execSync('git log --reverse --format=%ad --date=format:%Y').toString!.split('\n').0.trim!
-          catch e => "#{new Date! .getFullYear!}"
+        try
+          cmd = 'git log --reverse --format=%ad --date=format:%Y'
+          years = child_process.execSync(cmd).toString!trim!split('\n')filter(->it)
+          sy = (years.0 or '').trim!
+          ey = (years[* - 1] or '').trim!
+          year = if !ey or sy == ey => sy else "#{sy}-#{ey}"
+          if !year => throw new Error("no year")
+        catch e =>
+          console.log e
+          year = "#{new Date! .getFullYear!}"
 
         license = templates[type]
           .replace(/#{year}/g, year)
           .replace(/#{name}/g, name)
         fs.write-file-sync "LICENSE", license.trim! + "\n"
-        console.log "LICENSE (#{type}) generated.".green
+        console.log "LICENSE (#{type.toUpperCase!}) generated.".green
 
 

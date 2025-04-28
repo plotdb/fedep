@@ -419,27 +419,36 @@ cmds.license = {
       ? pkg.author
       : typeof pkg.author === 'object' ? pkg.author.name : null;
     return Promise.resolve().then(function(){
-      if (!name) {
-        return getInput("Author name not found. Please enter your name for LICENSE: ");
-      } else {
+      if (name) {
         return name;
       }
+      return getInput("Author name not found. Please enter your name for LICENSE: ");
     }).then(function(name){
-      var year, e, license;
+      var cmd, years, sy, ey, year, e, license;
       if (!name) {
         quit("[ERROR] No author name provided. Cannot generate LICENSE.".red);
       }
-      year = (function(){
-        try {
-          return execSync('git log --reverse --format=%ad --date=format:%Y').toString().split('\n')[0].trim();
-        } catch (e$) {
-          e = e$;
-          return new Date().getFullYear() + "";
+      try {
+        cmd = 'git log --reverse --format=%ad --date=format:%Y';
+        years = child_process.execSync(cmd).toString().trim().split('\n').filter(function(it){
+          return it;
+        });
+        sy = (years[0] || '').trim();
+        ey = (years[years.length - 1] || '').trim();
+        year = !ey || sy === ey
+          ? sy
+          : sy + "-" + ey;
+        if (!year) {
+          throw new Error("no year");
         }
-      }());
+      } catch (e$) {
+        e = e$;
+        console.log(e);
+        year = new Date().getFullYear() + "";
+      }
       license = templates[type].replace(/#{year}/g, year).replace(/#{name}/g, name);
       fs.writeFileSync("LICENSE", license.trim() + "\n");
-      return console.log(("LICENSE (" + type + ") generated.").green);
+      return console.log(("LICENSE (" + type.toUpperCase() + ") generated.").green);
     });
   }
 };
