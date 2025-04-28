@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, babel, quit, cmds, slice$ = [].slice;
+var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, readline, babel, quit, getInput, cmds, arg, k, v, slice$ = [].slice;
 colors = require('@plotdb/colors');
 fs = require('fs');
 path = require('path');
@@ -9,10 +9,24 @@ browserify = require('browserify');
 yargs = require('yargs');
 child_process = require('child_process');
 glob = require('glob');
+readline = require('readline');
 babel = require("@babel/core");
 quit = function(){
   console.error(Array.from(arguments).join(''));
   return process.exit();
+};
+getInput = function(q){
+  return new Promise(function(res){
+    var rl;
+    rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    return rl.question(q, function(ans){
+      rl.close();
+      return res(answer);
+    });
+  });
 };
 cmds = {};
 cmds['default'] = {
@@ -368,7 +382,12 @@ cmds.publish = {
     });
   }
 };
-yargs.command(cmds.init).command(cmds.publish).command(cmds['default']).argv;
+arg = yargs;
+for (k in cmds) {
+  v = cmds[k];
+  arg = arg.command(v);
+}
+arg.argv;
 function import$(obj, src){
   var own = {}.hasOwnProperty;
   for (var key in src) if (own.call(src, key)) obj[key] = src[key];
