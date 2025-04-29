@@ -136,7 +136,6 @@ cmds.license =
           year = if !ey or sy == ey => sy else "#{sy}-#{ey}"
           if !year => throw new Error("no year")
         catch e =>
-          console.log e
           year = "#{new Date! .getFullYear!}"
 
         license = templates[type]

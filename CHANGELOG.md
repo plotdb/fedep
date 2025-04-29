@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.4.1
+
+ - remove unnecessary log
+
+
 ## v1.4.0
 
  - support `npx fedep license` command

@@ -443,7 +443,6 @@ cmds.license = {
         }
       } catch (e$) {
         e = e$;
-        console.log(e);
         year = new Date().getFullYear() + "";
       }
       license = templates[type].replace(/#{year}/g, year).replace(/#{name}/g, name);
