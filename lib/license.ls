@@ -4,7 +4,7 @@ cmds.license =
   builder: (yargs) ->
     yargs
       .positional \type, do
-        describe: 'license type, e.g., mit, apache, bsd'
+        describe: 'license type, e.g., mit, apache, bsd, agpl'
         type: \string
   handler: (argv) ->
     # 讀取 package.json 拿作者
@@ -110,6 +110,25 @@ cmds.license =
       CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
       OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+      '''
+      agpl: '''
+      GNU AFFERO GENERAL PUBLIC LICENSE
+      Version 3, 19 November 2007
+
+      Copyright (C) #{year} #{name}
+
+      This program is free software: you can redistribute it and/or modify
+      it under the terms of the GNU Affero General Public License as published by
+      the Free Software Foundation, either version 3 of the License, or
+      (at your option) any later version.
+
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU Affero General Public License for more details.
+
+      You should have received a copy of the GNU Affero General Public License
+      along with this program.  If not, see <https://www.gnu.org/licenses/>.
       '''
 
     unless templates[type]

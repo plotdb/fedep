@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.4.3
+
+ - add `agpl` license in license generator
+
+
 ## v1.4.2
 
  - fix bug: license generation fails due to incorrect variable name `answer` (should be: `ans`)
