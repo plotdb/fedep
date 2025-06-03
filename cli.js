@@ -24,7 +24,7 @@ getInput = function(q){
     });
     return rl.question(q, function(ans){
       rl.close();
-      return res(answer);
+      return res(ans);
     });
   });
 };

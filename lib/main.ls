@@ -8,7 +8,7 @@ get-input = (q) ->
   rl = readline.createInterface {input: process.stdin, output: process.stdout}
   (ans) <- rl.question q, _
   rl.close!
-  res answer
+  res ans
 
 cmds = {}
 

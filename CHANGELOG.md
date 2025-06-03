@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.4.2
+
+ - fix bug: license generation fails due to incorrect variable name `answer` (should be: `ans`)
+
+
 ## v1.4.1
 
  - remove unnecessary log
