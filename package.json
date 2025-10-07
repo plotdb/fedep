@@ -10,7 +10,7 @@
   "homepage": "https://github.com/plotdb/fedep",
   "repository": {
     "type": "git",
-    "url": "https://github.com/plotdb/fedep"
+    "url": "git+https://github.com/plotdb/fedep.git"
   },
   "engines": {
     "node": ">=10.14.1",
@@ -32,7 +32,7 @@
     "livescript": "^1.6.0"
   },
   "bin": {
-    "fedep": "./cli.js"
+    "fedep": "cli.js"
   },
   "frontendDependencies": {
     "root": "web/static/assets/lib",
