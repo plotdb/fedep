@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.4.5
+
+ - fix bug: deleted files are not removed from release branch when publishing to github
+
+
 ## v1.4.4
 
  - support release to github with `publish -g` option

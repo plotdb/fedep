@@ -480,13 +480,9 @@ makeGithubRelease = function(arg$){
       fsExtra.removeSync(releaseFolder);
     }
     return exec(['git', 'worktree', 'add', '--force'].concat([releaseFolder, branch])).then(function(){
-      var cmd;
-      fsExtra.copySync(workFolder, releaseFolder, {
-        overwrite: true
-      });
-      cmd = "cd .fedep/_public && git add * && git commit -m \"regen\" && git push -u " + remote + " " + branch + " && cd .. && rm -rf _public";
       return new Promise(function(res, rej){
-        return child_process.exec(cmd, function(e, sout, serr){
+        return child_process.exec("cd " + releaseFolder + " && git rm -r *", function(e, sout, serr){
+          var cmd;
           serr == null && (serr = "");
           if (e) {
             return rej(new Error([sout, serr].map(function(it){
@@ -495,7 +491,21 @@ makeGithubRelease = function(arg$){
               return it;
             }).join('\n')));
           }
-          return res();
+          fsExtra.copySync(workFolder, releaseFolder, {
+            overwrite: true
+          });
+          cmd = "cd " + releaseFolder + " && git add * && git commit -m \"regen\" && git push -u " + remote + " " + branch + " && cd .. && rm -rf _public";
+          return child_process.exec(cmd, function(e, sout, serr){
+            serr == null && (serr = "");
+            if (e) {
+              return rej(new Error([sout, serr].map(function(it){
+                return (it || '').trim();
+              }).filter(function(it){
+                return it;
+              }).join('\n')));
+            }
+            return res();
+          });
         });
       });
     });
