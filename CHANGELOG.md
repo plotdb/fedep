@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.4.4
+
+ - support release to github with `publish -g` option
+
+
 ## v1.4.3
 
  - add `agpl` license in license generator

@@ -2,7 +2,8 @@
 rm -f cli.js
 echo "#!/usr/bin/env node" > cli.js
 mkdir -p .built
-cat lib/main.ls lib/default.ls lib/init.ls lib/publish.ls lib/license.ls lib/load-cmds.ls > .built/cli.js
+cat lib/main.ls lib/default.ls lib/init.ls lib/release.ls \
+    lib/publish.ls lib/license.ls lib/load-cmds.ls > .built/cli.js
 ./node_modules/.bin/lsc -cbp --no-header .built/cli.js >> cli.js
 chmod 755 cli.js
 rm -rf .built

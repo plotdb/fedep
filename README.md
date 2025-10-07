@@ -98,6 +98,16 @@ You can also use a different dist folder by `folder` option:
     npx fedep publish --folder another-dist
 
 
+### Release on Github
+
+Instead of using npm, if you want to publish to Github as a release, simply add `-g` option:
+
+    npx fedep publish -g
+
+by default the published files will be push into a specific branch, which by default is `release`. add an additional option to overwrite this default branch:
+
+    npx fedep publish -g my-release-branch
+
 
 ## Alternatives
 

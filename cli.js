@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, readline, babel, quit, getInput, cmds, arg, k, v, slice$ = [].slice;
+var colors, fs, path, os, fsExtra, browserify, yargs, child_process, glob, readline, babel, quit, getInput, cmds, makeGithubRelease, arg, k, v, slice$ = [].slice;
 colors = require('@plotdb/colors');
 fs = require('fs');
 path = require('path');
@@ -295,6 +295,251 @@ cmds.init = {
     }
   }
 };
+makeGithubRelease = function(arg$){
+  var branch, ref$, exec, validateRemote, validateBranch, validateVersion, getVersion, parseChangelog, makeRelease, isGitWorkTree, ensureReleaseBranch, updateReleaseBranch, ghStatus, version, ret;
+  branch = (ref$ = arg$.branch) != null ? ref$ : "release";
+  exec = function(opt){
+    opt == null && (opt = {});
+    return new Promise(function(res, rej){
+      var ref$, cmd, input, out, proc;
+      if (Array.isArray(opt)) {
+        ref$ = [opt, null], cmd = ref$[0], input = ref$[1];
+      } else {
+        cmd = opt.cmd, input = opt.input;
+      }
+      out = [];
+      proc = child_process.spawn(cmd[0], cmd.slice(1), {
+        stdio: input
+          ? ['pipe', 'pipe', 'pipe']
+          : ['ignore', 'pipe', 'pipe']
+      });
+      proc.stdout.on('data', function(it){
+        return out.push(it.toString());
+      });
+      proc.stderr.on('data', function(it){
+        return out.push(it.toString());
+      });
+      if (input) {
+        proc.stdin.end(input);
+      }
+      proc.on('error', rej);
+      return proc.on('exit', function(code){
+        if (code === 0) {
+          return res(out.join(''));
+        } else {
+          return rej(new Error("Command failed: " + cmd.join(' ') + "\noutput:\n" + out.join('')));
+        }
+      });
+    });
+  };
+  validateRemote = function(b){
+    if (!/^[-.0-9a-zA-Z\/]+$/.exec(b)) {
+      throw new Error("invalid remote " + b);
+    } else {
+      return b;
+    }
+  };
+  validateBranch = function(b){
+    if (!/^[-.0-9a-zA-Z\/]+$/.exec(b)) {
+      throw new Error("invalid branch " + b);
+    } else {
+      return b;
+    }
+  };
+  validateVersion = function(v){
+    if (!(v && /^\d+\.\d+\.\d+$/.exec(v))) {
+      throw new Error("invalid version " + v);
+    } else {
+      return v;
+    }
+  };
+  getVersion = function(){
+    return validateVersion((JSON.parse(fs.readFileSync("package.json").toString()) || {}).version);
+  };
+  parseChangelog = function(arg$){
+    var version, filename, ref$, lines, log, hit, start, end, i$, len$, line, to$, i;
+    version = arg$.version, filename = (ref$ = arg$.filename) != null ? ref$ : "CHANGELOG.md";
+    validateVersion(version);
+    if (!fs.existsSync(filename)) {
+      return "release for version " + version;
+    }
+    lines = fs.readFileSync(filename).toString().split('\n');
+    ref$ = [[], false, 0, -1], log = ref$[0], hit = ref$[1], start = ref$[2], end = ref$[3];
+    for (i$ = 0, len$ = lines.length; i$ < len$; ++i$) {
+      line = lines[i$];
+      if (!hit && ~line.indexOf(version)) {
+        hit = true;
+        continue;
+      } else if (hit === true && /#+\s+v?\d+\.\d+\.\d+/.exec(line)) {
+        hit = false;
+        break;
+      } else if (hit) {
+        log.push(line);
+      }
+    }
+    log = log.map(function(it){
+      return it.trim();
+    });
+    for (i$ = 0, to$ = log.length; i$ < to$; ++i$) {
+      i = i$;
+      if (!log[i]) {
+        continue;
+      } else {
+        start = i;
+        break;
+      }
+    }
+    for (i$ = log.length - 1; i$ >= 0; --i$) {
+      i = i$;
+      if (!log[i]) {
+        continue;
+      } else {
+        end = i + 1;
+        break;
+      }
+    }
+    return log.slice(start, end).join('\n').trim();
+  };
+  makeRelease = function(arg$){
+    var branch, ref$, version, releaseNote, cmd;
+    branch = (ref$ = (arg$ != null
+      ? arg$
+      : {}).branch) != null ? ref$ : "release";
+    validateBranch(branch);
+    version = getVersion();
+    releaseNote = parseChangelog({
+      version: version
+    });
+    if (!releaseNote) {
+      console.log(("no available release note for version " + version + " from CHANGELOG.md.").yellow);
+      console.log("Generate from commits instead.".yellow);
+    }
+    releaseNote = releaseNote.replace(/"/gm, '\\"');
+    cmd = ['gh', 'release', 'create'].concat(["v" + version], ["--target", branch, "--title", version], !releaseNote
+      ? ["--generate-notes"]
+      : ["--notes-file", "-"]);
+    return exec({
+      cmd: cmd,
+      input: releaseNote
+    });
+  };
+  isGitWorkTree = function(){
+    return exec(['git', 'rev-parse', '--is-inside-work-tree']).then(function(ret){
+      ret == null && (ret = "");
+      if (ret.trim() !== 'true') {
+        return Promise.reject(new Error("not a git repository"));
+      }
+    });
+  };
+  ensureReleaseBranch = function(arg$){
+    var ref$, remote, ref1$, branch;
+    ref$ = arg$ != null
+      ? arg$
+      : {}, remote = (ref1$ = ref$.remote) != null ? ref1$ : "origin", branch = (ref1$ = ref$.branch) != null ? ref1$ : "release";
+    validateBranch(branch);
+    validateRemote(remote);
+    return isGitWorkTree().then(function(){
+      return exec(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).then(function(workingBranch){
+        workingBranch = workingBranch.trim();
+        return Promise.resolve().then(function(){
+          return exec(['git', 'show-ref', '--verify', '--quiet'].concat(["refs/heads/" + branch]));
+        })['catch'](function(){
+          console.log(("no branch " + branch + " for releasing. creating one from current branch...").yellow);
+          return exec(['git', 'checkout', '-b'].concat([branch])).then(function(){
+            return exec(['git', 'checkout'].concat([workingBranch])).then(function(){});
+          });
+        }).then(function(){
+          return exec(['git', 'ls-remote', '--heads'].concat([remote, branch])).then(function(ret){
+            ret == null && (ret = "");
+            if (!!~ret.indexOf("refs/heads/" + branch)) {
+              return;
+            }
+            console.log(("no remote branch " + branch + " for releasing. creating one from current branch...").yellow);
+            return exec(['git', 'checkout'].concat([branch])).then(function(){
+              return exec(['git', 'push', '--force'].concat([remote, branch])).then(function(){
+                return exec(['git', 'checkout'].concat([workingBranch])).then(function(){});
+              });
+            });
+          });
+        });
+      });
+    });
+  };
+  updateReleaseBranch = function(arg$){
+    var ref$, remote, ref1$, branch, workFolder, releaseFolder;
+    ref$ = arg$ != null
+      ? arg$
+      : {}, remote = (ref1$ = ref$.remote) != null ? ref1$ : "origin", branch = (ref1$ = ref$.branch) != null ? ref1$ : "release", workFolder = (ref1$ = ref$.workFolder) != null ? ref1$ : ".fedep/publish";
+    releaseFolder = ".fedep/_public";
+    validateRemote(remote);
+    validateBranch(branch);
+    if (!fs.existsSync(workFolder)) {
+      return Promise.reject("work folder " + workFolder + " doesn't exist");
+    }
+    if (fs.existsSync(releaseFolder)) {
+      fsExtra.removeSync(releaseFolder);
+    }
+    return exec(['git', 'worktree', 'add', '--force'].concat([releaseFolder, branch])).then(function(){
+      var cmd;
+      fsExtra.copySync(workFolder, releaseFolder, {
+        overwrite: true
+      });
+      cmd = "cd .fedep/_public && git add * && git commit -m \"regen\" && git push -u " + remote + " " + branch + " && cd .. && rm -rf _public";
+      return new Promise(function(res, rej){
+        return child_process.exec(cmd, function(e, sout, serr){
+          serr == null && (serr = "");
+          if (e) {
+            return rej(new Error([sout, serr].map(function(it){
+              return (it || '').trim();
+            }).filter(function(it){
+              return it;
+            }).join('\n')));
+          }
+          return res();
+        });
+      });
+    });
+  };
+  ghStatus = function(){
+    return exec(['gh', 'status'])['catch'](function(){
+      return Promise.reject(new Error("gh status failed. run 'gh auth login' if necessary."));
+    });
+  };
+  version = getVersion();
+  ret = parseChangelog({
+    version: version
+  });
+  console.log("release " + version + " with change log: ");
+  console.log("----------------------------------");
+  console.log(ret);
+  console.log("----------------------------------");
+  return Promise.resolve().then(function(){
+    console.log("[release] check gh status ...".yellow);
+    return ghStatus();
+  }).then(function(){
+    console.log("[release] check work tree status ...".yellow);
+    return isGitWorkTree();
+  }).then(function(){
+    console.log("[release] prepare release branch...".yellow);
+    return ensureReleaseBranch({
+      branch: branch
+    });
+  }).then(function(){
+    console.log("[release] update release branch...".yellow);
+    return updateReleaseBranch({
+      branch: branch
+    });
+  }).then(function(){
+    console.log("[release] make github release ...".yellow);
+    return makeRelease({
+      branch: branch
+    });
+  }).then(function(){
+    return console.log("[release] finish. ".green);
+  })['catch'](function(e){
+    return console.log("[release] failed: ".red, e);
+  });
+};
 cmds.publish = {
   command: 'publish',
   desc: 'publish module to npm with specified folder content in root folder',
@@ -309,12 +554,26 @@ cmds.publish = {
       'default': 'dist',
       alias: 'f',
       description: "default folder to publish"
+    }).option('github', {
+      type: 'string',
+      'default': true,
+      alias: 'g',
+      description: "publish into branch"
     });
   },
   handler: function(argv){
-    var srcFolder, workFolder, packageJson, json, files, re, exec;
+    var srcFolder, workFolder, releaseBranch, packageJson, json, files, re, exec, p;
     srcFolder = argv.f || "dist";
     workFolder = ".fedep/publish";
+    releaseBranch = !argv.g
+      ? ''
+      : typeof argv.g === 'boolean'
+        ? 'release'
+        : argv.g;
+    if (releaseBranch && !/^[.0-9a-zA-Z/]+$/.exec(releaseBranch)) {
+      console.error(("[ERROR] invalid specified release branch name " + releaseBranch + ". exit.").red);
+      process.exit();
+    }
     if (fs.existsSync(workFolder)) {
       fsExtra.removeSync(workFolder);
     }
@@ -374,7 +633,12 @@ cmds.publish = {
         });
       });
     };
-    return exec(['npm', 'publish'].concat([workFolder], ['--access', 'public'])).then(function(){
+    p = !releaseBranch
+      ? exec(['npm', 'publish'].concat([workFolder], ['--access', 'public']))
+      : makeGithubRelease({
+        branch: releaseBranch || 'release'
+      });
+    return p.then(function(){
       return fs.rmSync(workFolder, {
         recursive: true,
         force: true

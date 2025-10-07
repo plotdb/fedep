@@ -9,9 +9,16 @@ cmds.publish =
       .option \folder, do
         type: \string, default: \dist, alias: \f
         description: "default folder to publish"
+      .option \github, do
+        type: \string, default: true, alias: \g
+        description: "publish into branch"
   handler: (argv) ->
     src-folder = argv.f or "dist"
     work-folder = ".fedep/publish"
+    release-branch = if !argv.g => '' else if typeof(argv.g) == \boolean => 'release' else argv.g
+    if release-branch and !/^[.0-9a-zA-Z/]+$/.exec(release-branch) =>
+      console.error "[ERROR] invalid specified release branch name #release-branch. exit.".red
+      process.exit!
     if fs.exists-sync work-folder => fs-extra.remove-sync work-folder
     if !fs.exists-sync(src-folder) =>
       console.error "[ERROR] specified publish folder `".red + src-folder.brightYellow + "` doesn't exist. exit.".red
@@ -52,5 +59,7 @@ cmds.publish =
       proc = child_process.spawn cmd.0, cmd.slice(1), {stdio: 'inherit'}
       proc.on \exit, -> if (it > 0) => rej new Error! else res!
 
-    exec(<[npm publish]> ++ [work-folder] ++ <[--access public]>)
-      .then -> fs.rm-sync work-folder, {recursive: true, force: true}
+    p = if !release-branch => exec(<[npm publish]> ++ [work-folder] ++ <[--access public]>)
+    else make-github-release {branch: release-branch or 'release'}
+
+    p.then -> fs.rm-sync work-folder, {recursive: true, force: true}
