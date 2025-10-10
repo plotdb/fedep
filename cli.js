@@ -566,7 +566,6 @@ cmds.publish = {
       description: "default folder to publish"
     }).option('github', {
       type: 'string',
-      'default': true,
       alias: 'g',
       description: "publish into branch"
     });
@@ -575,9 +574,9 @@ cmds.publish = {
     var srcFolder, workFolder, releaseBranch, packageJson, json, files, re, exec, p;
     srcFolder = argv.f || "dist";
     workFolder = ".fedep/publish";
-    releaseBranch = !argv.g
+    releaseBranch = !(argv.g != null)
       ? ''
-      : typeof argv.g === 'boolean'
+      : !argv.g
         ? 'release'
         : argv.g;
     if (releaseBranch && !/^[.0-9a-zA-Z/]+$/.exec(releaseBranch)) {

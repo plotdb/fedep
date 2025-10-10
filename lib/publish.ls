@@ -10,12 +10,12 @@ cmds.publish =
         type: \string, default: \dist, alias: \f
         description: "default folder to publish"
       .option \github, do
-        type: \string, default: true, alias: \g
+        type: \string, alias: \g
         description: "publish into branch"
   handler: (argv) ->
     src-folder = argv.f or "dist"
     work-folder = ".fedep/publish"
-    release-branch = if !argv.g => '' else if typeof(argv.g) == \boolean => 'release' else argv.g
+    release-branch = if !(argv.g?) => '' else if !argv.g => 'release' else argv.g
     if release-branch and !/^[.0-9a-zA-Z/]+$/.exec(release-branch) =>
       console.error "[ERROR] invalid specified release branch name #release-branch. exit.".red
       process.exit!
