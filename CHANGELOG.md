@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.5.0
+
+ - support `exports` patching in `publish` command
+
+
 ## v1.4.6
 
  - fix bug: publish triggers github release even if `-g` option is not present

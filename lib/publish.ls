@@ -50,6 +50,11 @@ cmds.publish =
     <[style module main browser unpkg]>.map (field) ->
       if !json[field] => return
       json[field] = path.relative(src-folder, json[field])
+    <[exports]>.map (field) ->
+      if !json[field] => return
+      for k,v of (json[field] or {}) =>
+        # `./` is required for a valid exports target.
+        json[field][k] = "./" + path.relative(src-folder, json[field][k])
 
     # we still have to delete `files` so npm publish all files in worker-folder
     delete json.files
