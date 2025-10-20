@@ -97,6 +97,14 @@ You can also use a different dist folder by `folder` option:
 
     npx fedep publish --folder another-dist
 
+Additionally please note: it's convenient to add a publish script in `scripts` field, however this may cause trouble releasing your package because npm seems to prevent `publish` and trigger `npm publish` manually, causing issue during release.
+
+So, please use alternative name such as `release`, as in the below example which release package to both npm and github:
+
+    "scripts": {
+        "release": "npx fedep publish; npx fedep publish -g"
+    }
+ 
 
 ### Release on Github
 
