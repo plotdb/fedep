@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.6.0
+
+ - support `bin` patching in `publish` command
+
+
 ## v1.5.0
 
  - support `exports` patching in `publish` command
