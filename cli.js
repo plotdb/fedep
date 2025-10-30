@@ -625,18 +625,7 @@ cmds.publish = {
       }
       return json[field] = path.relative(srcFolder, json[field]);
     });
-    ['bin'].map(function(field){
-      var k, ref$, v, results$ = [];
-      if (!json[field]) {
-        return;
-      }
-      for (k in ref$ = json[field] || {}) {
-        v = ref$[k];
-        results$.push(json[field][k] = "./" + path.relative(srcFolder, json[field][k]));
-      }
-      return results$;
-    });
-    ['exports'].map(function(field){
+    ['bin', 'exports'].map(function(field){
       var k, ref$, v, results$ = [];
       if (!json[field]) {
         return;

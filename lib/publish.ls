@@ -51,13 +51,7 @@ cmds.publish =
       if !json[field] => return
       json[field] = path.relative(src-folder, json[field])
 
-    <[bin]>.map (field) ->
-      if !json[field] => return
-      for k,v of (json[field] or {}) =>
-        # `./` is required for a valid exports target.
-        json[field][k] = "./" + path.relative(src-folder, json[field][k])
-
-    <[exports]>.map (field) ->
+    <[bin exports]>.map (field) ->
       if !json[field] => return
       for k,v of (json[field] or {}) =>
         # `./` is required for a valid exports target.
