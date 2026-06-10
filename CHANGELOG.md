@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.7.0
+
+ - support `--no-dist` flag when publishing to release based on files directly without src-folder
+
+
 ## v1.6.0
 
  - support `bin` patching in `publish` command

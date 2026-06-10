@@ -12,20 +12,24 @@ cmds.publish =
       .option \github, do
         type: \string, alias: \g
         description: "publish into branch"
+      .option \no-dist, do
+        type: \boolean, default: false
+        description: "skip dist folder; publish only files listed in package.json files field plus necessary files"
   handler: (argv) ->
     src-folder = argv.f or "dist"
+    no-dist = argv.noD or argv[\no-dist] or false
     work-folder = ".fedep/publish"
     release-branch = if !(argv.g?) => '' else if !argv.g => 'release' else argv.g
     if release-branch and !/^[.0-9a-zA-Z/]+$/.exec(release-branch) =>
       console.error "[ERROR] invalid specified release branch name #release-branch. exit.".red
       process.exit!
     if fs.exists-sync work-folder => fs-extra.remove-sync work-folder
-    if !fs.exists-sync(src-folder) =>
+    if !no-dist and !fs.exists-sync(src-folder) =>
       console.error "[ERROR] specified publish folder `".red + src-folder.brightYellow + "` doesn't exist. exit.".red
       process.exit!
 
     fs-extra.ensure-dir-sync work-folder
-    fs-extra.copy-sync src-folder, work-folder
+    if !no-dist => fs-extra.copy-sync src-folder, work-folder
 
     <[README README.md package.json LICENSE CHANGELOG.md]>.map ->
       if !fs.exists-sync(it) => return
@@ -37,7 +41,7 @@ cmds.publish =
     files = (json.files or [])
       .map (item) -> ret = glob.sync item
       .reduce(((a,b) -> a ++ b),[])
-    if !argv.d =>
+    if !no-dist and !argv.d =>
       re = new RegExp("^#{src-folder}")
       files = files.filter -> !re.exec(it)
 
@@ -47,15 +51,16 @@ cmds.publish =
       console.log " --","[COPY]".green, "#f -> #des"
       fs-extra.copy-sync(f, des)
 
-    <[style module main browser unpkg]>.map (field) ->
-      if !json[field] => return
-      json[field] = path.relative(src-folder, json[field])
+    if !no-dist =>
+      <[style module main browser unpkg]>.map (field) ->
+        if !json[field] => return
+        json[field] = path.relative(src-folder, json[field])
 
-    <[bin exports]>.map (field) ->
-      if !json[field] => return
-      for k,v of (json[field] or {}) =>
-        # `./` is required for a valid exports target.
-        json[field][k] = "./" + path.relative(src-folder, json[field][k])
+      <[bin exports]>.map (field) ->
+        if !json[field] => return
+        for k,v of (json[field] or {}) =>
+          # `./` is required for a valid exports target.
+          json[field][k] = "./" + path.relative(src-folder, json[field][k])
 
     # we still have to delete `files` so npm publish all files in worker-folder
     delete json.files

@@ -568,11 +568,16 @@ cmds.publish = {
       type: 'string',
       alias: 'g',
       description: "publish into branch"
+    }).option('no-dist', {
+      type: 'boolean',
+      'default': false,
+      description: "skip dist folder; publish only files listed in package.json files field plus necessary files"
     });
   },
   handler: function(argv){
-    var srcFolder, workFolder, releaseBranch, packageJson, json, files, re, exec, p;
+    var srcFolder, noDist, workFolder, releaseBranch, packageJson, json, files, re, exec, p;
     srcFolder = argv.f || "dist";
+    noDist = argv.noD || argv['no-dist'] || false;
     workFolder = ".fedep/publish";
     releaseBranch = !(argv.g != null)
       ? ''
@@ -586,12 +591,14 @@ cmds.publish = {
     if (fs.existsSync(workFolder)) {
       fsExtra.removeSync(workFolder);
     }
-    if (!fs.existsSync(srcFolder)) {
+    if (!noDist && !fs.existsSync(srcFolder)) {
       console.error("[ERROR] specified publish folder `".red + srcFolder.brightYellow + "` doesn't exist. exit.".red);
       process.exit();
     }
     fsExtra.ensureDirSync(workFolder);
-    fsExtra.copySync(srcFolder, workFolder);
+    if (!noDist) {
+      fsExtra.copySync(srcFolder, workFolder);
+    }
     ['README', 'README.md', 'package.json', 'LICENSE', 'CHANGELOG.md'].map(function(it){
       if (!fs.existsSync(it)) {
         return;
@@ -606,7 +613,7 @@ cmds.publish = {
     }).reduce(function(a, b){
       return a.concat(b);
     }, []);
-    if (!argv.d) {
+    if (!noDist && !argv.d) {
       re = new RegExp("^" + srcFolder);
       files = files.filter(function(it){
         return !re.exec(it);
@@ -619,23 +626,25 @@ cmds.publish = {
       console.log(" --", "[COPY]".green, f + " -> " + des);
       return fsExtra.copySync(f, des);
     });
-    ['style', 'module', 'main', 'browser', 'unpkg'].map(function(field){
-      if (!json[field]) {
-        return;
-      }
-      return json[field] = path.relative(srcFolder, json[field]);
-    });
-    ['bin', 'exports'].map(function(field){
-      var k, ref$, v, results$ = [];
-      if (!json[field]) {
-        return;
-      }
-      for (k in ref$ = json[field] || {}) {
-        v = ref$[k];
-        results$.push(json[field][k] = "./" + path.relative(srcFolder, json[field][k]));
-      }
-      return results$;
-    });
+    if (!noDist) {
+      ['style', 'module', 'main', 'browser', 'unpkg'].map(function(field){
+        if (!json[field]) {
+          return;
+        }
+        return json[field] = path.relative(srcFolder, json[field]);
+      });
+      ['bin', 'exports'].map(function(field){
+        var k, ref$, v, results$ = [];
+        if (!json[field]) {
+          return;
+        }
+        for (k in ref$ = json[field] || {}) {
+          v = ref$[k];
+          results$.push(json[field][k] = "./" + path.relative(srcFolder, json[field][k]));
+        }
+        return results$;
+      });
+    }
     delete json.files;
     fs.writeFileSync(packageJson, JSON.stringify(json));
     exec = function(cmd){
