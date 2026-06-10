@@ -97,6 +97,10 @@ You can also use a different dist folder by `folder` option:
 
     npx fedep publish --folder another-dist
 
+If you don't have a `dist` folder and want to publish only files listed in `package.json`'s `files` field along with core files, use `--skip-dist`:
+
+    npx fedep publish --skip-dist
+
 Additionally please note: it's convenient to add a publish script in `scripts` field, however this may cause trouble releasing your package because npm seems to prevent `publish` and trigger `npm publish` manually, causing issue during release.
 
 So, please use alternative name such as `release`, as in the below example which release package to both npm and github:

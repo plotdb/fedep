@@ -568,7 +568,7 @@ cmds.publish = {
       type: 'string',
       alias: 'g',
       description: "publish into branch"
-    }).option('no-dist', {
+    }).option('skip-dist', {
       type: 'boolean',
       'default': false,
       description: "skip dist folder; publish only files listed in package.json files field plus necessary files"
@@ -577,7 +577,7 @@ cmds.publish = {
   handler: function(argv){
     var srcFolder, noDist, workFolder, releaseBranch, packageJson, json, files, re, exec, p;
     srcFolder = argv.f || "dist";
-    noDist = argv.noD || argv['no-dist'] || false;
+    noDist = argv.skipDist || false;
     workFolder = ".fedep/publish";
     releaseBranch = !(argv.g != null)
       ? ''

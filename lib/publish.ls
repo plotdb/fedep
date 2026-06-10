@@ -12,12 +12,12 @@ cmds.publish =
       .option \github, do
         type: \string, alias: \g
         description: "publish into branch"
-      .option \no-dist, do
+      .option \skip-dist, do
         type: \boolean, default: false
         description: "skip dist folder; publish only files listed in package.json files field plus necessary files"
   handler: (argv) ->
     src-folder = argv.f or "dist"
-    no-dist = argv.noD or argv[\no-dist] or false
+    no-dist = argv.skipDist or false
     work-folder = ".fedep/publish"
     release-branch = if !(argv.g?) => '' else if !argv.g => 'release' else argv.g
     if release-branch and !/^[.0-9a-zA-Z/]+$/.exec(release-branch) =>

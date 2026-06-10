@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.7.1
+
+ - fix bug: replace `--no-dist` option  with `--skip-dist` option for yarg naming convention.
+
+
 ## v1.7.0
 
  - support `--no-dist` flag when publishing to release based on files directly without src-folder
