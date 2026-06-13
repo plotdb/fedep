@@ -86,7 +86,7 @@ make-github-release = ({branch = "release"}) ->
     if fs.exists-sync release-folder => fs-extra.remove-sync release-folder
     <- exec <[git worktree add --force]> ++ [release-folder, branch] .then _
     (res, rej) <- new Promise _
-    (e, sout, serr = "") <- child_process.exec "cd #release-folder && git rm -r *", _
+    (e, sout, serr = "") <- child_process.exec "cd #release-folder && git rm -r --ignore-unmatch *", _
     if e => return rej new Error([sout, serr].map(->(it or '').trim!).filter(->it).join(\\n))
     fs-extra.copy-sync work-folder, release-folder, {overwrite: true}
     cmd = "cd #release-folder && git add * && git commit -m \"regen\" && git push -u #remote #branch && cd .. && rm -rf _public"

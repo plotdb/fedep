@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.7.2
+
+ - fix bug: release on a empty branch will fail. add `--ignore-unmatch` to prevent from this.
+
+
 ## v1.7.1
 
  - fix bug: replace `--no-dist` option  with `--skip-dist` option for yarg naming convention.

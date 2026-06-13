@@ -481,7 +481,7 @@ makeGithubRelease = function(arg$){
     }
     return exec(['git', 'worktree', 'add', '--force'].concat([releaseFolder, branch])).then(function(){
       return new Promise(function(res, rej){
-        return child_process.exec("cd " + releaseFolder + " && git rm -r *", function(e, sout, serr){
+        return child_process.exec("cd " + releaseFolder + " && git rm -r --ignore-unmatch *", function(e, sout, serr){
           var cmd;
           serr == null && (serr = "");
           if (e) {
