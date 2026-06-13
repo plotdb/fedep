@@ -494,7 +494,7 @@ makeGithubRelease = function(arg$){
           fsExtra.copySync(workFolder, releaseFolder, {
             overwrite: true
           });
-          cmd = "cd " + releaseFolder + " && git add * && git commit -m \"regen\" && git push -u " + remote + " " + branch + " && cd .. && rm -rf _public";
+          cmd = "cd " + releaseFolder + " && git add -f * && git commit -m \"regen\" && git push -u " + remote + " " + branch + " && cd .. && rm -rf _public";
           return child_process.exec(cmd, function(e, sout, serr){
             serr == null && (serr = "");
             if (e) {

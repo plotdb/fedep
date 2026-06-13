@@ -1,5 +1,10 @@
 # Change Logs
 
+## v1.7.3
+
+ - fix bug: release with ignored files will fail. add `-f` to force add.
+
+
 ## v1.7.2
 
  - fix bug: release on a empty branch will fail. add `--ignore-unmatch` to prevent from this.
