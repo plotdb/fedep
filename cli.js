@@ -68,7 +68,7 @@ cmds['default'] = {
     }, pkg.frontendDependencies || {});
     extModules = localModules.filter(function(o){
       return !fed.modules.filter(function(it){
-        return it === o.name;
+        return (it.name || it) === o.name;
       }).length;
     });
     if (extModules.length) {

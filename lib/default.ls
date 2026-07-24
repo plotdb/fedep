@@ -25,7 +25,8 @@ cmds.default =
     pkg = JSON.parse(fs.read-file-sync "package.json" .toString!)
     fed = {root: '.', modules: []} <<< (pkg.frontendDependencies or {})
 
-    ext-modules = local-modules.filter((o) -> !(fed.modules.filter(->it == o.name).length))
+    # note: fed.modules entries can be a string or an object ( {name, dir, ...} )
+    ext-modules = local-modules.filter((o) -> !(fed.modules.filter(->(it.name or it) == o.name).length))
     if ext-modules.length =>
       console.warn "[WARN] following modules are not listed in fedep modules. still installed:".yellow
       console.warn ext-modules.map(->" - #{it.name}").join(\\n).yellow

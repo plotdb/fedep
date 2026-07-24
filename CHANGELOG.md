@@ -1,5 +1,11 @@
 # Change Logs
 
+## v1.7.4
+
+ - fix bug: object-form entries ( {name, dir, ...} ) in frontendDependencies.modules
+   are not recognized by `-l` dedup check, causing the module to be processed twice
+   ( second pass without `dir` overwrites the correct symlink with package root )
+
 ## v1.7.3
 
  - fix bug: release with ignored files will fail. add `-f` to force add.
