@@ -1,5 +1,14 @@
 # Change Logs
 
+## v1.7.5
+
+ - fix bug: `publish` crashes on nested conditional `exports`
+   ( e.g., `".": {"browser": ..., "default": ...}` ) — rewrite recursively.
+ - fix bug: `publish` rewrites paths outside src-folder ( e.g., `./src/...` when
+   publishing `dist` ) into broken `../` paths — now only paths under src-folder
+   are rebased; others are kept as is. also handle string-form `bin`.
+
+
 ## v1.7.4
 
  - fix bug: object-form entries ( {name, dir, ...} ) in frontendDependencies.modules

@@ -52,15 +52,28 @@ cmds.publish =
       fs-extra.copy-sync(f, des)
 
     if !no-dist =>
+      # rebase paths under src-folder to root. return null for paths outside src-folder --
+      # those files are copied verbatim into work-folder, so their paths should be kept as is.
+      rebase = (p) ->
+        rel = path.relative(src-folder, p)
+        if rel.starts-with('..') or path.is-absolute(rel) => null else rel
+      # exports / bin values can be nested objects (e.g., conditional exports); rewrite recursively.
+      rewrite = (v) ->
+        if typeof(v) == \string =>
+          rel = rebase(v)
+          # `./` is required for a valid exports target.
+          if rel? => "./" + rel else v
+        else
+          for k,sub of (v or {}) => v[k] = rewrite(sub)
+          v
       <[style module main browser unpkg]>.map (field) ->
         if !json[field] => return
-        json[field] = path.relative(src-folder, json[field])
+        rel = rebase(json[field])
+        if rel? => json[field] = rel
 
       <[bin exports]>.map (field) ->
         if !json[field] => return
-        for k,v of (json[field] or {}) =>
-          # `./` is required for a valid exports target.
-          json[field][k] = "./" + path.relative(src-folder, json[field][k])
+        json[field] = rewrite(json[field])
 
     # we still have to delete `files` so npm publish all files in worker-folder
     delete json.files

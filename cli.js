@@ -575,7 +575,7 @@ cmds.publish = {
     });
   },
   handler: function(argv){
-    var srcFolder, noDist, workFolder, releaseBranch, packageJson, json, files, re, exec, p;
+    var srcFolder, noDist, workFolder, releaseBranch, packageJson, json, files, re, rebase, rewrite, exec, p;
     srcFolder = argv.f || "dist";
     noDist = argv.skipDist || false;
     workFolder = ".fedep/publish";
@@ -627,22 +627,47 @@ cmds.publish = {
       return fsExtra.copySync(f, des);
     });
     if (!noDist) {
+      rebase = function(p){
+        var rel;
+        rel = path.relative(srcFolder, p);
+        if (rel.startsWith('..') || path.isAbsolute(rel)) {
+          return null;
+        } else {
+          return rel;
+        }
+      };
+      rewrite = function(v){
+        var rel, k, ref$, sub;
+        if (typeof v === 'string') {
+          rel = rebase(v);
+          if (rel != null) {
+            return "./" + rel;
+          } else {
+            return v;
+          }
+        } else {
+          for (k in ref$ = v || {}) {
+            sub = ref$[k];
+            v[k] = rewrite(sub);
+          }
+          return v;
+        }
+      };
       ['style', 'module', 'main', 'browser', 'unpkg'].map(function(field){
+        var rel;
         if (!json[field]) {
           return;
         }
-        return json[field] = path.relative(srcFolder, json[field]);
+        rel = rebase(json[field]);
+        if (rel != null) {
+          return json[field] = rel;
+        }
       });
       ['bin', 'exports'].map(function(field){
-        var k, ref$, v, results$ = [];
         if (!json[field]) {
           return;
         }
-        for (k in ref$ = json[field] || {}) {
-          v = ref$[k];
-          results$.push(json[field][k] = "./" + path.relative(srcFolder, json[field][k]));
-        }
-        return results$;
+        return json[field] = rewrite(json[field]);
       });
     }
     delete json.files;
