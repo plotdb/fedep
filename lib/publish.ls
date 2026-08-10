@@ -56,7 +56,7 @@ cmds.publish =
       # those files are copied verbatim into work-folder, so their paths should be kept as is.
       rebase = (p) ->
         rel = path.relative(src-folder, p)
-        if rel.starts-with('..') or path.is-absolute(rel) => null else rel
+        if rel == '..' or rel.starts-with("..#{path.sep}") or path.is-absolute(rel) => null else rel
       # exports / bin values can be nested objects (e.g., conditional exports); rewrite recursively.
       rewrite = (v) ->
         if typeof(v) == \string =>

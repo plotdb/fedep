@@ -1,5 +1,11 @@
 # Change Logs
 
+## v1.7.6
+
+ - fix bug: files under src-folder with names starting with `..` ( e.g., `dist/..foo.js` )
+   are wrongly treated as outside src-folder and not rebased when publishing.
+
+
 ## v1.7.5
 
  - fix bug: `publish` crashes on nested conditional `exports`

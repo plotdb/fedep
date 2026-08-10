@@ -630,7 +630,7 @@ cmds.publish = {
       rebase = function(p){
         var rel;
         rel = path.relative(srcFolder, p);
-        if (rel.startsWith('..') || path.isAbsolute(rel)) {
+        if (rel === '..' || rel.startsWith(".." + path.sep) || path.isAbsolute(rel)) {
           return null;
         } else {
           return rel;
