@@ -153,6 +153,30 @@ This is why `publish` without `-g` does not tag at all: an npm-only release has
 no second side, and stamping `src/` on it would imply one exists.
 
 
+### Releasing fedep itself
+
+fedep does not release itself with `publish -g`, and should not: `-g` builds a
+release branch, and fedep has no second side to put there - `files` is just the
+built `cli.js`, committed on `master`. So it takes the bare-tag path described
+above, by hand:
+
+    ./build                                   # cli.js is build output - forgetting this ships the old one
+    npm publish                                # files: ["cli.js"], already at the root, so plain npm publish
+    git commit -am " - ... - bump version"     # CHANGELOG entry + version, per the existing convention
+    git push origin master
+    git tag v1.8.0 && git push origin v1.8.0   # bare, no prefix - see Tags above
+    sed -n '/^## v1.8.0$/,/^## v1\.[0-9]/p' CHANGELOG.md | sed '1d;$d' \
+      | gh release create v1.8.0 --title 1.8.0 --notes-file -
+
+The last line is what `publish -g` would have done for you via `parse-changelog`.
+Piping the CHANGELOG entry in also keeps the release body clean - notes pasted
+into the Github web form come back with `\r\n` line endings.
+
+Do the npm and the Github halves together. Skipping the second half is easy and
+silent, and fedep has seven versions on npm with no tag or release to show for
+them ( v1.4.2, v1.4.3, v1.4.6, v1.6.0, v1.7.0, v1.7.1, v1.7.3 ).
+
+
 ## Alternatives
 
 see also: 
