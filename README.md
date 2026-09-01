@@ -120,16 +120,37 @@ by default the published files will be push into a specific branch, which by def
 
     npx fedep publish -g my-release-branch
 
-Two tags are created per release, prefixed by which side of the build they point
-at: `dist/vX.Y.Z` on the release branch ( the built files, what the Github
-release itself points at ) and `src/vX.Y.Z` on the source commit that produced
-it. Both carry a prefix so that neither is a bare `vX.Y.Z` whose side you would
-have to guess at. Depend on either as usual:
+### Tags
+
+Releasing to a branch means a version exists in two places - the built files on
+the release branch, and the source commit that produced them - so `publish -g`
+tags both, and each tag says which side it is:
+
+| tag | points at | use it to |
+|:--|:--|:--|
+| `dist/vX.Y.Z` | the release branch | install / depend on the built package |
+| `src/vX.Y.Z`  | the source commit  | read, diff, bisect, or check out the source of a version |
 
     npm install github:owner/repo#dist/v1.2.3
 
-Bare `vX.Y.Z` tags from before fedep 1.8.0 are left as they are; those point at
-the release branch.
+Both sides carry a prefix, rather than only the newer one. Tagging just the
+source and leaving the release bare would produce a repo where `v1.2.3` is a
+build and `v1.2.4` is a source, with nothing in either name to tell them apart.
+
+A bare `vX.Y.Z` means one of two things, and which one is answered by whether
+the repo has a release branch at all:
+
+ - **the repo has a release branch**: a bare tag predates fedep 1.8.0 and points
+   at the built files. Old tags are left as they are - renaming them would break
+   published release links and anything already installed against them.
+ - **the repo has no release branch**: there is only one side, so there is
+   nothing to disambiguate and a bare tag is the right name. This covers modules
+   published to npm only, and modules whose build output is committed to the
+   source branch ( fedep itself is one - its `files` is just the built `cli.js`,
+   sitting on `master` ). Prefixing here would answer a question nobody can ask.
+
+This is why `publish` without `-g` does not tag at all: an npm-only release has
+no second side, and stamping `src/` on it would imply one exists.
 
 
 ## Alternatives
