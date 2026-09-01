@@ -1,5 +1,22 @@
 # Change Logs
 
+## v1.8.0
+
+ - release tags are now prefixed by side: the github release is tagged
+   `dist/vX.Y.Z` instead of `vX.Y.Z`, and the source commit that produced it is
+   tagged `src/vX.Y.Z` and pushed. previously only the release branch was
+   tagged, so a version's source was reachable only by reading CHANGELOG and
+   guessing at commits.
+ - the prefixes are on both sides on purpose. tagging only the source as
+   `src/...` and leaving the release bare would mean a repo where `v1.2.3` is a
+   build and `v1.2.4` is a source, with nothing in either name to say which.
+ - existing bare `vX.Y.Z` tags are left alone - renaming them would break
+   published release links and anything already installed against them. the
+   rule is simply that a bare tag predates this change and is a build.
+ - note for `github:owner/repo#dist/v1.2.3` installs: verified that npm keeps
+   the slashed committish intact and that codeload serves the encoded form.
+
+
 ## v1.7.6
 
  - fix bug: files under src-folder with names starting with `..` ( e.g., `dist/..foo.js` )

@@ -49,11 +49,25 @@ make-github-release = ({branch = "release"}) ->
       console.log "Generate from commits instead.".yellow
     release-note = release-note.replace /"/gm, '\\"'
     cmd = (
-      <[gh release create]> ++ ["v#version"] ++
+      <[gh release create]> ++ ["dist/v#version"] ++
       [ "--target", branch, "--title", version] ++
       (if !release-note => ["--generate-notes" ] else ["--notes-file", "-"])
     )
     exec({cmd, input: release-note})
+
+  # the release itself is tagged `dist/vX.Y.Z` on the release branch, which says
+  # nothing about which source commit produced it. tag that commit too, so the
+  # two sides of a version are both reachable. prefixes on both, because a bare
+  # `vX.Y.Z` would be unreadable next to them - is it the source or the build?
+  tag-source = ({remote = "origin"} = {}) ->
+    validate-remote remote
+    tag = "src/v#{get-version!}"
+    (ret = "") <- exec(<[git tag -l]> ++ [tag]).then _
+    if ret.trim! =>
+      console.log "source tag #tag exists already - leaving it alone.".yellow
+      return
+    <- exec(<[git tag]> ++ [tag]).then _
+    exec(<[git push]> ++ [remote, tag])
 
   is-git-work-tree = ->
     (ret = "") <- exec(<[git rev-parse --is-inside-work-tree]>) .then _
@@ -121,6 +135,9 @@ make-github-release = ({branch = "release"}) ->
     .then ->
       console.log "[release] make github release ...".yellow
       make-release {branch}
+    .then ->
+      console.log "[release] tag source commit ...".yellow
+      tag-source!
     .then ->
       console.log "[release] finish. ".green
     .catch (e) ->

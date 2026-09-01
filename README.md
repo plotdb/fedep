@@ -120,6 +120,17 @@ by default the published files will be push into a specific branch, which by def
 
     npx fedep publish -g my-release-branch
 
+Two tags are created per release, prefixed by which side of the build they point
+at: `dist/vX.Y.Z` on the release branch ( the built files, what the Github
+release itself points at ) and `src/vX.Y.Z` on the source commit that produced
+it. Both carry a prefix so that neither is a bare `vX.Y.Z` whose side you would
+have to guess at. Depend on either as usual:
+
+    npm install github:owner/repo#dist/v1.2.3
+
+Bare `vX.Y.Z` tags from before fedep 1.8.0 are left as they are; those point at
+the release branch.
+
 
 ## Alternatives
 

@@ -296,7 +296,7 @@ cmds.init = {
   }
 };
 makeGithubRelease = function(arg$){
-  var branch, ref$, exec, validateRemote, validateBranch, validateVersion, getVersion, parseChangelog, makeRelease, isGitWorkTree, ensureReleaseBranch, updateReleaseBranch, ghStatus, version, ret;
+  var branch, ref$, exec, validateRemote, validateBranch, validateVersion, getVersion, parseChangelog, makeRelease, tagSource, isGitWorkTree, ensureReleaseBranch, updateReleaseBranch, ghStatus, version, ret;
   branch = (ref$ = arg$.branch) != null ? ref$ : "release";
   exec = function(opt){
     opt == null && (opt = {});
@@ -415,12 +415,30 @@ makeGithubRelease = function(arg$){
       console.log("Generate from commits instead.".yellow);
     }
     releaseNote = releaseNote.replace(/"/gm, '\\"');
-    cmd = ['gh', 'release', 'create'].concat(["v" + version], ["--target", branch, "--title", version], !releaseNote
+    cmd = ['gh', 'release', 'create'].concat(["dist/v" + version], ["--target", branch, "--title", version], !releaseNote
       ? ["--generate-notes"]
       : ["--notes-file", "-"]);
     return exec({
       cmd: cmd,
       input: releaseNote
+    });
+  };
+  tagSource = function(arg$){
+    var remote, ref$, tag;
+    remote = (ref$ = (arg$ != null
+      ? arg$
+      : {}).remote) != null ? ref$ : "origin";
+    validateRemote(remote);
+    tag = "src/v" + getVersion();
+    return exec(['git', 'tag', '-l'].concat([tag])).then(function(ret){
+      ret == null && (ret = "");
+      if (ret.trim()) {
+        console.log(("source tag " + tag + " exists already - leaving it alone.").yellow);
+        return;
+      }
+      return exec(['git', 'tag'].concat([tag])).then(function(){
+        return exec(['git', 'push'].concat([remote, tag]));
+      });
     });
   };
   isGitWorkTree = function(){
@@ -544,6 +562,9 @@ makeGithubRelease = function(arg$){
     return makeRelease({
       branch: branch
     });
+  }).then(function(){
+    console.log("[release] tag source commit ...".yellow);
+    return tagSource();
   }).then(function(){
     return console.log("[release] finish. ".green);
   })['catch'](function(e){
