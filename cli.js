@@ -596,7 +596,15 @@ cmds.publish = {
     });
   },
   handler: function(argv){
-    var srcFolder, noDist, workFolder, releaseBranch, packageJson, json, files, re, rebase, rewrite, exec, p;
+    var lockV, pkgV, srcFolder, noDist, workFolder, releaseBranch, packageJson, json, files, re, rebase, rewrite, exec, p;
+    if (fs.existsSync("package-lock.json")) {
+      lockV = JSON.parse(fs.readFileSync("package-lock.json").toString()).version;
+      pkgV = JSON.parse(fs.readFileSync("package.json").toString()).version;
+      if (lockV != null && lockV !== pkgV) {
+        console.error(("[ERROR] package-lock.json version (" + lockV + ") != package.json version (" + pkgV + "). run `npm i` and commit the lockfile first. exit.").red);
+        process.exit();
+      }
+    }
     srcFolder = argv.f || "dist";
     noDist = argv.skipDist || false;
     workFolder = ".fedep/publish";

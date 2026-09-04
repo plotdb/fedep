@@ -16,6 +16,18 @@ cmds.publish =
         type: \boolean, default: false
         description: "skip dist folder; publish only files listed in package.json files field plus necessary files"
   handler: (argv) ->
+    # package-lock.json carries this package's own version ( top level + packages[""] ).
+    # editing package.json version by hand leaves the lockfile stale, so the next
+    # `npm i` produces an unrelated lock diff. refuse to publish ( npm or -g ) until
+    # they match. skipped when there is no lockfile ( e.g. web projects ) or it
+    # carries no top-level version. fix: run `npm i` and commit the lockfile.
+    if fs.exists-sync "package-lock.json" =>
+      lock-v = JSON.parse(fs.read-file-sync "package-lock.json" .toString!).version
+      pkg-v = JSON.parse(fs.read-file-sync "package.json" .toString!).version
+      if lock-v? and lock-v != pkg-v =>
+        console.error "[ERROR] package-lock.json version (#lock-v) != package.json version (#pkg-v). run `npm i` and commit the lockfile first. exit.".red
+        process.exit!
+
     src-folder = argv.f or "dist"
     no-dist = argv.skipDist or false
     work-folder = ".fedep/publish"

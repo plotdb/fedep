@@ -1,5 +1,14 @@
 # Change Logs
 
+## v1.8.1
+
+ - `publish` ( with or without `-g` ) now verifies that package-lock.json's
+   version matches package.json before publishing, and aborts if they differ.
+   editing the version by hand leaves the lockfile stale, so the next `npm i`
+   produces an unrelated lock diff. skipped when there is no lockfile ( e.g. web
+   projects ), and when the lockfile carries no top-level version.
+
+
 ## v1.8.0
 
  - release tags are now prefixed by side: the github release is tagged
