@@ -35,6 +35,10 @@
   "bin": {
     "fedep": "cli.js"
   },
+  "scripts": {
+    "build": "./build",
+    "release": "./release"
+  },
   "frontendDependencies": {
     "root": "web/static/assets/lib",
     "modules": [

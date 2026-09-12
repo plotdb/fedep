@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# release fedep itself. fedep does NOT publish itself with `fedep publish -g` --
+# `-g` builds a release branch, and fedep has no second side to put there ( its
+# `files` is just the built cli.js, committed on master ). so this is the bare
+# tag path from README's "Tags", automated: npm publish, tag, github release.
+#
+# every step is skip-if-done, like `publish -g` is, so a run that dies partway
+# ( npm published but the tag never pushed, say ) is finished by running again.
+# that is the failure this script exists to prevent: fedep has five versions on
+# npm with no tag and no release because the halves were done by hand.
+set -euo pipefail
+
+dry=0
+case "${1:-}" in
+  -n|--dry-run) dry=1 ;;
+  "") ;;
+  *) echo "usage: npm run release [-- --dry-run]" >&2; exit 1 ;;
+esac
+
+say()  { printf '\033[33m[release]\033[0m %s\n' "$*"; }
+skip() { printf '\033[33m[release]\033[0m %s \033[2m(skipped)\033[0m\n' "$*"; }
+die()  { printf '\033[31m[release] %s\033[0m\n' "$*" >&2; exit 1; }
+run()  { if [ "$dry" = 1 ]; then printf '\033[2m         would run: %s\033[0m\n' "$*"; else "$@"; fi; }
+
+version=$(node -p 'require("./package.json").version')
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "invalid version '$version' in package.json"
+tag="v$version"
+say "releasing $version"
+
+# --- checks: everything that can be wrong, before anything is published -------
+
+lock=$(node -p 'try{require("./package-lock.json").version}catch(e){""}')
+[ -z "$lock" ] || [ "$lock" = "$version" ] \
+  || die "package-lock.json is $lock but package.json is $version. run \`npm i\` and commit the lockfile."
+
+git diff-index --quiet HEAD -- \
+  || die "working tree is dirty. commit or stash first."
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+[ "$branch" = master ] || die "on branch '$branch', expected master."
+
+git fetch -q origin master
+[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/master)" ] \
+  || die "HEAD is not origin/master. push ( or pull ) first -- a tag on an unpushed commit points at nothing."
+
+# cli.js is build output. building after the commit is how you ship the previous
+# version's code under this version's number, so the build must be a no-op here.
+./build
+node --check cli.js || die "build produced a cli.js that does not parse."
+git diff --quiet -- cli.js \
+  || die "cli.js changed when rebuilt -- the committed build is stale. commit the rebuilt cli.js first."
+
+# the notes going in empty is silent otherwise: the release just ends up blank.
+notes=$(awk -v v="## v$version" '
+  $0 == v {inside = 1; next}
+  inside && /^## v[0-9]/ {exit}
+  inside {lines[n++] = $0}
+  END {
+    s = 0; while (s < n && lines[s] ~ /^[[:space:]]*$/) s++
+    e = n - 1; while (e >= s && lines[e] ~ /^[[:space:]]*$/) e--
+    for (i = s; i <= e; i++) print lines[i]
+  }
+' CHANGELOG.md)
+[ -n "$notes" ] || die "CHANGELOG.md has no entry for $tag ( expected a '## $tag' section )."
+
+published=$(npm view "fedep@$version" version 2>/dev/null || true)
+[ -n "$published" ] || npm whoami >/dev/null 2>&1 \
+  || die "not logged in to npm. run \`npm login\`."
+
+gh auth status >/dev/null 2>&1 || die "gh is not authenticated. run \`gh auth login\`."
+
+if [ "$dry" = 1 ]; then
+  say "notes for $tag:"
+  printf '%s\n' "$notes" | sed 's/^/         | /'
+fi
+
+# --- publish -----------------------------------------------------------------
+
+if [ -n "$published" ]; then
+  skip "npm: fedep@$version is published already"
+else
+  say "npm publish"
+  run npm publish
+fi
+
+if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+  skip "tag: $tag exists already"
+else
+  say "tag $tag"
+  run git tag "$tag"
+fi
+
+if [ -n "$(git ls-remote --tags origin "refs/tags/$tag")" ]; then
+  skip "tag: $tag is on origin already"
+else
+  say "push $tag"
+  run git push origin "$tag"
+fi
+
+if gh release view "$tag" >/dev/null 2>&1; then
+  skip "github release: $tag exists already"
+else
+  say "github release $tag"
+  # piping the notes keeps the body clean -- text pasted into the web form comes
+  # back with \r\n line endings.
+  if [ "$dry" = 1 ]; then
+    run gh release create "$tag" --title "$version" --notes-file -
+  else
+    printf '%s\n' "$notes" | gh release create "$tag" --title "$version" --notes-file -
+  fi
+fi
+
+say "done."

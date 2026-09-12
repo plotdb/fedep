@@ -10,6 +10,10 @@ symlink), and can **publish** a package's built `dist/` as a GitHub release.
 ## Layout
 
 - `cli.js` — compiled CLI (LiveScript source under `lib/`, build with `./build`).
+- `./release` (`npm run release`) — releases fedep itself: npm publish + bare tag
+  + github release, each step skipped if already done. See README "Releasing
+  fedep itself". Not the same thing as the `publish` subcommand, which releases
+  *other* packages.
 - `lib/` — LiveScript sources: `default.ls` (the copy/link command), and the
   publish/release logic surfaced through `cli.js`.
 - Two subcommands matter most:

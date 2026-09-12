@@ -184,23 +184,35 @@ bump the version instead.
 fedep does not release itself with `publish -g`, and should not: `-g` builds a
 release branch, and fedep has no second side to put there - `files` is just the
 built `cli.js`, committed on `master`. So it takes the bare-tag path described
-above, by hand:
+above. Prepare the commit by hand, then run one command:
 
-    ./build                                   # cli.js is build output - forgetting this ships the old one
-    npm publish                                # files: ["cli.js"], already at the root, so plain npm publish
-    git commit -am " - ... - bump version"     # CHANGELOG entry + version, per the existing convention
+    ./build                                 # cli.js is build output - see below
+    git commit -am " - ... - bump version"  # CHANGELOG entry + version, per the existing convention
     git push origin master
-    git tag v1.8.0 && git push origin v1.8.0   # bare, no prefix - see Tags above
-    sed -n '/^## v1.8.0$/,/^## v1\.[0-9]/p' CHANGELOG.md | sed '1d;$d' \
-      | gh release create v1.8.0 --title 1.8.0 --notes-file -
+    npm run release                         # npm publish + tag + github release
 
-The last line is what `publish -g` would have done for you via `parse-changelog`.
-Piping the CHANGELOG entry in also keeps the release body clean - notes pasted
-into the Github web form come back with `\r\n` line endings.
+`npm run release` ( the `./release` script ) does the three publishing steps
+together, because doing them by hand is how eight versions ended up on npm with
+no tag and no release to show for them ( v1.4.2, v1.4.3, v1.4.6, v1.6.0,
+v1.7.0, v1.7.1, v1.7.3, v1.8.1 ). Like `publish -g`, each step is skipped if
+already done, so an interrupted run is finished by running it again.
 
-Do the npm and the Github halves together. Skipping the second half is easy and
-silent, and fedep has seven versions on npm with no tag or release to show for
-them ( v1.4.2, v1.4.3, v1.4.6, v1.6.0, v1.7.0, v1.7.1, v1.7.3 ).
+It refuses to release at all unless everything lines up first:
+
+| it stops when | because |
+|:--|:--|
+| the working tree is dirty, or HEAD is not `origin/master` | a tag on an unpushed commit points at nothing |
+| package-lock.json disagrees with package.json | the next `npm i` would produce an unrelated lock diff |
+| rebuilding changes `cli.js` | the committed build is stale - that ships the previous version's code under this version's number |
+| CHANGELOG.md has no `## vX.Y.Z` section | the release notes come from there, and an empty body is silent |
+| npm or `gh` is not authenticated | better now than halfway through |
+
+Pass `--dry-run` to see the notes it extracted and the steps it would take:
+
+    npm run release -- --dry-run
+
+The notes are piped into `gh` rather than pasted, which keeps the body clean -
+text entered in the Github web form comes back with `\r\n` line endings.
 
 
 ## Alternatives

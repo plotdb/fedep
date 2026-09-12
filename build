@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# without this a failing `lsc` still exits 0 -- the last command is the cleanup --
+# leaving a truncated cli.js behind that looks like a successful build.
+set -euo pipefail
 rm -f cli.js
 echo "#!/usr/bin/env node" > cli.js
 mkdir -p .built
