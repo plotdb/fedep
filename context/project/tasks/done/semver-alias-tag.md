@@ -48,3 +48,13 @@ explicit/exact use.
 - `npm install github:owner/repo#semver:^X.Y.0` installs the built package and
   auto-picks the highest `vX.Y.z` patch.
 - Document the restored `#semver:` path in README's Tags section.
+
+
+## Resolution — done in v1.9.0 (2026/09/12)
+
+Option B, implemented as `tag-release-alias` in `lib/release.ls`, called after
+`tag-source` in the release chain: it skips if `vX.Y.Z` already exists, resolves
+`refs/heads/<release-branch>` to a commit, then `git tag vX.Y.Z <commit>` and
+pushes. `lib/publish.ls` gained a `--alias-tag` option (default true, so
+`--no-alias-tag` opts out) passed through to `make-github-release`. README's
+Tags section documents the restored `#semver:` path; `cli.js` rebuilt.

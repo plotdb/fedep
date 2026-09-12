@@ -124,33 +124,59 @@ by default the published files will be push into a specific branch, which by def
 
 Releasing to a branch means a version exists in two places - the built files on
 the release branch, and the source commit that produced them - so `publish -g`
-tags both, and each tag says which side it is:
+tags both, and each tag says which side it is ( plus a bare alias, below ):
 
 | tag | points at | use it to |
 |:--|:--|:--|
 | `dist/vX.Y.Z` | the release branch | install / depend on the built package |
 | `src/vX.Y.Z`  | the source commit  | read, diff, bisect, or check out the source of a version |
+| `vX.Y.Z`      | the release branch ( same commit as `dist/vX.Y.Z` ) | let npm `#semver:` ranges resolve |
 
-    npm install github:owner/repo#dist/v1.2.3
+    npm install github:owner/repo#dist/v1.2.3     # exact, unambiguous
+    npm install github:owner/repo#semver:^1.2.0   # tracks patches, via the bare tag
 
-Both sides carry a prefix, rather than only the newer one. Tagging just the
-source and leaving the release bare would produce a repo where `v1.2.3` is a
+Both *named* sides carry a prefix, rather than only the newer one. Tagging just
+the source and leaving the release bare would produce a repo where `v1.2.3` is a
 build and `v1.2.4` is a source, with nothing in either name to tell them apart.
 
-A bare `vX.Y.Z` means one of two things, and which one is answered by whether
-the repo has a release branch at all:
+The bare tag exists for one reason: npm's `#semver:` range matcher only
+understands bare `vX.Y.Z` / `X.Y.Z` tags, and ignores anything prefixed. Without
+it a consumer has to pin `#dist/vX.Y.Z` exactly and bump it by hand for every
+patch. So `publish -g` adds it alongside, **always on the release branch commit**
+- pointing a bare tag at the source commit would make `#semver:` install unbuilt
+source. Pass `--no-alias-tag` to skip it in repos that would rather not carry a
+bare tag.
 
- - **the repo has a release branch**: a bare tag predates fedep 1.8.0 and points
-   at the built files. Old tags are left as they are - renaming them would break
-   published release links and anything already installed against them.
- - **the repo has no release branch**: there is only one side, so there is
-   nothing to disambiguate and a bare tag is the right name. This covers modules
+A bare `vX.Y.Z` therefore always points at built files, whatever produced it:
+
+ - **repo with a release branch**: the alias tag above ( or, before fedep 1.8.0,
+   the release tag itself ). Pre-1.8.0 tags are left as they are - renaming them
+   would break published release links and anything already installed against
+   them.
+ - **repo with no release branch**: there is only one side, so there is nothing
+   to disambiguate and a bare tag is the right name. This covers modules
    published to npm only, and modules whose build output is committed to the
    source branch ( fedep itself is one - its `files` is just the built `cli.js`,
    sitting on `master` ). Prefixing here would answer a question nobody can ask.
 
 This is why `publish` without `-g` does not tag at all: an npm-only release has
 no second side, and stamping `src/` on it would imply one exists.
+
+
+### Re-running a release
+
+`publish -g` is safe to run again. Each step is skip-if-done - release branch
+already matching the built files, github release already cut, `src/` or bare tag
+already pushed - so a run interrupted partway through ( a network failure
+between the push and the release, say ) is recovered by running the same command
+again, and re-running a version that is fully out is a no-op that reports what
+it skipped.
+
+Note that a release branch with nothing to commit does **not** by itself mean
+the version was published - it is also what a half-finished run leaves behind -
+so what actually stops a re-release is the github release existing. To genuinely
+re-cut a version, delete its release and tags first; the ordinary path is to
+bump the version instead.
 
 
 ### Releasing fedep itself

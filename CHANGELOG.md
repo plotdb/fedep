@@ -1,5 +1,21 @@
 # Change Logs
 
+## v1.9.0
+
+ - `publish -g` now also tags the release branch commit as a bare `vX.Y.Z`,
+   alongside `dist/vX.Y.Z` and `src/vX.Y.Z`. npm's `#semver:` only matches bare
+   tags, so since 1.8.0 consumers had to pin `#dist/vX.Y.Z` and bump it by hand;
+   `#semver:^X.Y.Z` resolves to the built package again. never on the source
+   commit ( that would install unbuilt source ). opt out with `--no-alias-tag`.
+ - `publish -g` is now re-runnable: the release branch, the github release and
+   both tags are each skipped if already done. a run that died halfway is
+   recovered by running it again, and a fully released version is a no-op
+   instead of an error. previously an unchanged release branch failed on `git
+   commit` with a bare "On branch release", and an existing release failed on
+   `gh release create` before the tag steps ran.
+ - `.fedep/_public` cleanup now runs `git worktree prune`.
+
+
 ## v1.8.1
 
  - `publish` ( with or without `-g` ) now verifies that package-lock.json's

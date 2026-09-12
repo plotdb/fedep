@@ -296,8 +296,8 @@ cmds.init = {
   }
 };
 makeGithubRelease = function(arg$){
-  var branch, ref$, exec, validateRemote, validateBranch, validateVersion, getVersion, parseChangelog, makeRelease, tagSource, isGitWorkTree, ensureReleaseBranch, updateReleaseBranch, ghStatus, version, ret;
-  branch = (ref$ = arg$.branch) != null ? ref$ : "release";
+  var branch, ref$, aliasTag, exec, validateRemote, validateBranch, validateVersion, getVersion, parseChangelog, makeRelease, tagSource, tagReleaseAlias, isGitWorkTree, ensureReleaseBranch, updateReleaseBranch, ghStatus, version, ret;
+  branch = (ref$ = arg$.branch) != null ? ref$ : "release", aliasTag = (ref$ = arg$.aliasTag) != null ? ref$ : true;
   exec = function(opt){
     opt == null && (opt = {});
     return new Promise(function(res, rej){
@@ -401,26 +401,37 @@ makeGithubRelease = function(arg$){
     return log.slice(start, end).join('\n').trim();
   };
   makeRelease = function(arg$){
-    var branch, ref$, version, releaseNote, cmd;
+    var branch, ref$, version;
     branch = (ref$ = (arg$ != null
       ? arg$
       : {}).branch) != null ? ref$ : "release";
     validateBranch(branch);
     version = getVersion();
-    releaseNote = parseChangelog({
-      version: version
-    });
-    if (!releaseNote) {
-      console.log(("no available release note for version " + version + " from CHANGELOG.md.").yellow);
-      console.log("Generate from commits instead.".yellow);
-    }
-    releaseNote = releaseNote.replace(/"/gm, '\\"');
-    cmd = ['gh', 'release', 'create'].concat(["dist/v" + version], ["--target", branch, "--title", version], !releaseNote
-      ? ["--generate-notes"]
-      : ["--notes-file", "-"]);
-    return exec({
-      cmd: cmd,
-      input: releaseNote
+    return exec(['gh', 'release', 'view'].concat(["dist/v" + version])).then(function(){
+      return true;
+    })['catch'](function(){
+      return false;
+    }).then(function(exists){
+      var releaseNote, cmd;
+      if (exists) {
+        console.log(("github release dist/v" + version + " exists already - leaving it alone.").yellow);
+        return;
+      }
+      releaseNote = parseChangelog({
+        version: version
+      });
+      if (!releaseNote) {
+        console.log(("no available release note for version " + version + " from CHANGELOG.md.").yellow);
+        console.log("Generate from commits instead.".yellow);
+      }
+      releaseNote = releaseNote.replace(/"/gm, '\\"');
+      cmd = ['gh', 'release', 'create'].concat(["dist/v" + version], ["--target", branch, "--title", version], !releaseNote
+        ? ["--generate-notes"]
+        : ["--notes-file", "-"]);
+      return exec({
+        cmd: cmd,
+        input: releaseNote
+      });
     });
   };
   tagSource = function(arg$){
@@ -438,6 +449,28 @@ makeGithubRelease = function(arg$){
       }
       return exec(['git', 'tag'].concat([tag])).then(function(){
         return exec(['git', 'push'].concat([remote, tag]));
+      });
+    });
+  };
+  tagReleaseAlias = function(arg$){
+    var ref$, remote, ref1$, branch, tag;
+    ref$ = arg$ != null
+      ? arg$
+      : {}, remote = (ref1$ = ref$.remote) != null ? ref1$ : "origin", branch = (ref1$ = ref$.branch) != null ? ref1$ : "release";
+    validateRemote(remote);
+    validateBranch(branch);
+    tag = "v" + getVersion();
+    return exec(['git', 'tag', '-l'].concat([tag])).then(function(ret){
+      ret == null && (ret = "");
+      if (ret.trim()) {
+        console.log(("alias tag " + tag + " exists already - leaving it alone.").yellow);
+        return;
+      }
+      return exec(['git', 'rev-parse'].concat(["refs/heads/" + branch])).then(function(commit){
+        commit == null && (commit = "");
+        return exec(['git', 'tag'].concat([tag, commit.trim()])).then(function(){
+          return exec(['git', 'push'].concat([remote, tag]));
+        });
       });
     });
   };
@@ -500,7 +533,7 @@ makeGithubRelease = function(arg$){
     return exec(['git', 'worktree', 'add', '--force'].concat([releaseFolder, branch])).then(function(){
       return new Promise(function(res, rej){
         return child_process.exec("cd " + releaseFolder + " && git rm -r --ignore-unmatch *", function(e, sout, serr){
-          var cmd;
+          var unchanged, commit, cmd;
           serr == null && (serr = "");
           if (e) {
             return rej(new Error([sout, serr].map(function(it){
@@ -512,7 +545,9 @@ makeGithubRelease = function(arg$){
           fsExtra.copySync(workFolder, releaseFolder, {
             overwrite: true
           });
-          cmd = "cd " + releaseFolder + " && git add -f * && git commit -m \"regen\" && git push -u " + remote + " " + branch + " && cd .. && rm -rf _public";
+          unchanged = "fedep:nothing-to-commit";
+          commit = "( git diff --cached --quiet && echo '" + unchanged + "' || git commit -m \"regen\" )";
+          cmd = "cd " + releaseFolder + " && git add -f * && " + commit + " && git push -u " + remote + " " + branch + " && cd .. && rm -rf _public && git worktree prune";
           return child_process.exec(cmd, function(e, sout, serr){
             serr == null && (serr = "");
             if (e) {
@@ -521,6 +556,9 @@ makeGithubRelease = function(arg$){
               }).filter(function(it){
                 return it;
               }).join('\n')));
+            }
+            if (~(sout || '').indexOf(unchanged)) {
+              console.log(("release branch " + branch + " already matches the built files - nothing to commit.").yellow);
             }
             return res();
           });
@@ -566,6 +604,14 @@ makeGithubRelease = function(arg$){
     console.log("[release] tag source commit ...".yellow);
     return tagSource();
   }).then(function(){
+    if (!aliasTag) {
+      return;
+    }
+    console.log("[release] tag release alias ...".yellow);
+    return tagReleaseAlias({
+      branch: branch
+    });
+  }).then(function(){
     return console.log("[release] finish. ".green);
   })['catch'](function(e){
     return console.log("[release] failed: ".red, e);
@@ -589,6 +635,10 @@ cmds.publish = {
       type: 'string',
       alias: 'g',
       description: "publish into branch"
+    }).option('alias-tag', {
+      type: 'boolean',
+      'default': true,
+      description: 'with -g, also tag the release commit as bare vX.Y.Z so npm `#semver:` ranges resolve. --no-alias-tag to skip'
     }).option('skip-dist', {
       type: 'boolean',
       'default': false,
@@ -719,7 +769,8 @@ cmds.publish = {
     p = !releaseBranch
       ? exec(['npm', 'publish'].concat([workFolder], ['--access', 'public']))
       : makeGithubRelease({
-        branch: releaseBranch || 'release'
+        branch: releaseBranch || 'release',
+        aliasTag: argv.aliasTag !== false
       });
     return p.then(function(){
       return fs.rmSync(workFolder, {

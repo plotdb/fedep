@@ -1,4 +1,4 @@
-make-github-release = ({branch = "release"}) ->
+make-github-release = ({branch = "release", alias-tag = true}) ->
   exec = (opt = {}) -> new Promise (res, rej) ->
     if Array.isArray(opt) => [cmd, input] = [opt, null]
     else {cmd, input} = opt
@@ -40,9 +40,19 @@ make-github-release = ({branch = "release"}) ->
     for i from log.length - 1 to 0 by -1 => if !log[i] => continue else end = i + 1; break
     return log.slice(start, end).join(\\n).trim!
 
+  # every step of the chain is skip-if-done, so a run that died halfway ( branch
+  # pushed but release not cut, or release cut but tags not pushed ) is resumed
+  # by simply running again, and a fully released version is a green no-op
+  # instead of a `gh` error. the release is the authoritative "already published"
+  # marker - an unchanged release branch is not, since that is also what a
+  # half-finished run leaves behind.
   make-release = ({branch = "release"} = {}) ->
     validate-branch branch
     version = get-version!
+    (exists) <- exec(<[gh release view]> ++ ["dist/v#version"]).then(->true).catch(->false).then _
+    if exists =>
+      console.log "github release dist/v#version exists already - leaving it alone.".yellow
+      return
     release-note = parse-changelog {version}
     if !release-note =>
       console.log "no available release note for version #version from CHANGELOG.md.".yellow
@@ -57,8 +67,9 @@ make-github-release = ({branch = "release"}) ->
 
   # the release itself is tagged `dist/vX.Y.Z` on the release branch, which says
   # nothing about which source commit produced it. tag that commit too, so the
-  # two sides of a version are both reachable. prefixes on both, because a bare
-  # `vX.Y.Z` would be unreadable next to them - is it the source or the build?
+  # two sides of a version are both reachable. prefixes on both, so neither is
+  # ambiguous - is a bare `vX.Y.Z` the source or the build? ( a bare tag is still
+  # added on top of these by `tag-release-alias` below, for npm's sake. )
   tag-source = ({remote = "origin"} = {}) ->
     validate-remote remote
     tag = "src/v#{get-version!}"
@@ -67,6 +78,24 @@ make-github-release = ({branch = "release"}) ->
       console.log "source tag #tag exists already - leaving it alone.".yellow
       return
     <- exec(<[git tag]> ++ [tag]).then _
+    exec(<[git push]> ++ [remote, tag])
+
+  # npm's `#semver:` range only matches bare `vX.Y.Z` / `X.Y.Z` tags, so the
+  # prefixed tags above leave consumers pinning an exact `#dist/vX.Y.Z` ref and
+  # bumping it by hand. mirror the release with a bare tag so `#semver:^X.Y.Z`
+  # resolves again. it MUST point at the release branch commit ( the built tree )
+  # - pointing it at the source commit would make `#semver:` install unbuilt
+  # source. opt out with `--no-alias-tag`.
+  tag-release-alias = ({remote = "origin", branch = "release"} = {}) ->
+    validate-remote remote
+    validate-branch branch
+    tag = "v#{get-version!}"
+    (ret = "") <- exec(<[git tag -l]> ++ [tag]).then _
+    if ret.trim! =>
+      console.log "alias tag #tag exists already - leaving it alone.".yellow
+      return
+    (commit = "") <- exec(<[git rev-parse]> ++ ["refs/heads/#branch"]).then _
+    <- exec(<[git tag]> ++ [tag, commit.trim!]).then _
     exec(<[git push]> ++ [remote, tag])
 
   is-git-work-tree = ->
@@ -103,9 +132,19 @@ make-github-release = ({branch = "release"}) ->
     (e, sout, serr = "") <- child_process.exec "cd #release-folder && git rm -r --ignore-unmatch *", _
     if e => return rej new Error([sout, serr].map(->(it or '').trim!).filter(->it).join(\\n))
     fs-extra.copy-sync work-folder, release-folder, {overwrite: true}
-    cmd = "cd #release-folder && git add -f * && git commit -m \"regen\" && git push -u #remote #branch && cd .. && rm -rf _public"
+    # `git commit` exits non-zero when nothing is staged, which is exactly what
+    # happens when a version is re-released with identical built files. that used
+    # to abort the whole chain - no push, no cleanup of `.fedep/_public` - with a
+    # bare "On branch release" for an error message. an unchanged tree is not a
+    # failure here, so skip the commit and carry on. the marker is how we tell
+    # that branch apart afterwards; sout is otherwise only read on error.
+    unchanged = "fedep:nothing-to-commit"
+    commit = "( git diff --cached --quiet && echo '#unchanged' || git commit -m \"regen\" )"
+    cmd = "cd #release-folder && git add -f * && #commit && git push -u #remote #branch && cd .. && rm -rf _public && git worktree prune"
     (e, sout, serr = "") <- child_process.exec cmd, _
     if e => return rej new Error([sout, serr].map(->(it or '').trim!).filter(->it).join(\\n))
+    if ~(sout or '').index-of(unchanged) =>
+      console.log "release branch #branch already matches the built files - nothing to commit.".yellow
     return res!
 
   gh-status = ->
@@ -138,6 +177,10 @@ make-github-release = ({branch = "release"}) ->
     .then ->
       console.log "[release] tag source commit ...".yellow
       tag-source!
+    .then ->
+      if !alias-tag => return
+      console.log "[release] tag release alias ...".yellow
+      tag-release-alias {branch}
     .then ->
       console.log "[release] finish. ".green
     .catch (e) ->

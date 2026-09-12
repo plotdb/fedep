@@ -28,18 +28,14 @@ symlink), and can **publish** a package's built `dist/` as a GitHub release.
 |---|---|---|
 | `dist/vX.Y.Z` | release branch (built, dist flattened to root) | install / depend on |
 | `src/vX.Y.Z`  | source commit | read / diff / bisect |
+| `vX.Y.Z`      | release branch (same commit as `dist/vX.Y.Z`) | npm `#semver:` ranges |
 
-Consumers depend on the built package with an **exact ref**:
-`npm install github:owner/repo#dist/vX.Y.Z`.
+Consumers can depend on the built package either exactly
+(`github:owner/repo#dist/vX.Y.Z`) or by range (`github:owner/repo#semver:^X.Y.Z`,
+which resolves through the bare alias tag). The bare tag is created by
+`publish -g` since v1.9.0 and can be disabled with `--no-alias-tag`.
 
 ## Documents
 
 - [tasks/todo/](./tasks/todo/) — pending work (one `.md` per task).
 - [tasks/done/](./tasks/done/) — completed tasks (move here when done).
-
-## Known trade-off
-
-The prefixed `dist/` / `src/` tags are **not** npm-semver-parseable, so
-`#semver:^X.Y.Z` no longer resolves a built release (it only matches bare
-`vX.Y.Z` tags). Consumers lose automatic patch tracking and must pin
-`#dist/vX.Y.Z` exactly. See [tasks/todo/semver-alias-tag.md](./tasks/todo/semver-alias-tag.md).

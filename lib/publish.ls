@@ -12,6 +12,9 @@ cmds.publish =
       .option \github, do
         type: \string, alias: \g
         description: "publish into branch"
+      .option \alias-tag, do
+        type: \boolean, default: true
+        description: 'with -g, also tag the release commit as bare vX.Y.Z so npm `#semver:` ranges resolve. --no-alias-tag to skip'
       .option \skip-dist, do
         type: \boolean, default: false
         description: "skip dist folder; publish only files listed in package.json files field plus necessary files"
@@ -96,6 +99,6 @@ cmds.publish =
       proc.on \exit, -> if (it > 0) => rej new Error! else res!
 
     p = if !release-branch => exec(<[npm publish]> ++ [work-folder] ++ <[--access public]>)
-    else make-github-release {branch: release-branch or 'release'}
+    else make-github-release {branch: release-branch or 'release', alias-tag: argv.aliasTag != false}
 
     p.then -> fs.rm-sync work-folder, {recursive: true, force: true}
