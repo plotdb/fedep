@@ -26,6 +26,7 @@
     "yargs": "^16.1.0"
   },
   "devDependencies": {
+    "@plotdb/guides": "github:plotdb/guides#master",
     "@zbryikt/template": "^2.4.1",
     "ldcover": "^3.5.5",
     "ldview": "^1.5.1",

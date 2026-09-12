@@ -5,3 +5,4 @@ secret.*
 *.log
 web/.view
 web/static/assets/lib
+/context/shared
